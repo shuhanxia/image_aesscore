@@ -1,0 +1,2746 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>图像美学质量评分问卷</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #172033;
+      --muted: #667085;
+      --line: #e4e7ec;
+      --primary: #2563eb;
+      --primary-soft: #eff6ff;
+      --danger: #dc2626;
+      --success: #16a34a;
+      --shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+        "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+      line-height: 1.6;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      background: rgba(246, 247, 251, 0.94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--line);
+    }
+
+    .topbar {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .title { font-weight: 750; font-size: 18px; white-space: nowrap; }
+
+    .progress-wrap { flex: 1; max-width: 560px; }
+
+    .progress-text {
+      display: flex;
+      justify-content: space-between;
+      color: var(--muted);
+      font-size: 13px;
+      margin-bottom: 6px;
+    }
+
+    .progress {
+      height: 8px;
+      background: #e8eef8;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .progress > div {
+      height: 100%;
+      width: 0%;
+      background: var(--primary);
+      transition: width .25s ease;
+    }
+
+    main {
+      max-width: 1120px;
+      margin: 24px auto;
+      padding: 0 20px 48px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 300px;
+      gap: 22px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .page { min-height: 720px; padding: 28px; }
+
+    h1, h2, h3 { line-height: 1.25; }
+    h1 { margin: 0 0 16px; font-size: 30px; }
+    h2 { margin: 26px 0 12px; font-size: 21px; }
+    h3 { margin: 18px 0 8px; font-size: 17px; }
+
+    .lead { color: var(--muted); font-size: 16px; margin-bottom: 18px; }
+
+    .info-box {
+      background: var(--primary-soft);
+      border: 1px solid #bfdbfe;
+      border-radius: 14px;
+      padding: 16px;
+      margin: 18px 0;
+    }
+
+    code { background: #f2f4f7; border-radius: 6px; padding: 1px 5px; }
+
+    .score-scale {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin: 16px 0;
+    }
+
+    .scale-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fff;
+      font-size: 13px;
+    }
+
+    .scale-item b {
+      display: block;
+      color: var(--primary);
+      font-size: 18px;
+      margin-bottom: 3px;
+    }
+
+    .image-meta {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+      align-items: center;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      background: #f2f4f7;
+      color: #344054;
+      font-size: 14px;
+      border: 1px solid #eaecf0;
+    }
+
+    .image-area {
+      width: 100%;
+      min-height: 430px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: #f9fafb;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      margin: 18px 0 20px;
+    }
+
+    .image-area img {
+      max-width: 100%;
+      max-height: 72vh;
+      object-fit: contain;
+      display: block;
+    }
+
+    .image-error { color: var(--danger); padding: 24px; text-align: center; }
+
+    .rating-title { font-size: 18px; font-weight: 700; margin-bottom: 12px; }
+
+    .rating-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+
+    .rating-option { position: relative; }
+    .rating-option input { position: absolute; opacity: 0; pointer-events: none; }
+
+    .rating-option label {
+      display: block;
+      text-align: center;
+      cursor: pointer;
+      border: 2px solid var(--line);
+      border-radius: 14px;
+      padding: 14px 8px;
+      background: #fff;
+      transition: all .15s ease;
+      user-select: none;
+    }
+
+    .rating-option label strong { display: block; font-size: 24px; line-height: 1.1; }
+    .rating-option label span { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; }
+
+    .rating-option input:checked + label {
+      border-color: var(--primary);
+      background: var(--primary-soft);
+      color: var(--primary);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 16px;
+      font-weight: 700;
+      cursor: pointer;
+      background: #eaecf0;
+      color: #344054;
+    }
+
+    button.primary { background: var(--primary); color: #fff; }
+    button.success { background: var(--success); color: #fff; }
+    button:disabled { opacity: .45; cursor: not-allowed; }
+
+    .side {
+      position: sticky;
+      top: 82px;
+      align-self: start;
+      padding: 18px;
+      max-height: calc(100vh - 100px);
+      overflow: auto;
+    }
+
+    .side h2 { margin-top: 0; font-size: 18px; }
+
+    .stat-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .stat-card {
+      background: #f9fafb;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .stat-card b { display: block; font-size: 22px; }
+    .stat-card span { color: var(--muted); font-size: 12px; }
+
+    .mini-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+
+    .mini-table th, .mini-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .mini-table th {
+      color: var(--muted);
+      font-weight: 600;
+      background: #fff;
+      position: sticky;
+      top: 0;
+    }
+
+    .status { margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+    textarea {
+      width: 100%;
+      min-height: 220px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+      resize: vertical;
+    }
+
+    .completion { text-align: center; padding: 70px 24px; }
+    .completion h1 { font-size: 34px; }
+
+    .export-area {
+      margin-top: 18px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .warn { color: var(--danger); font-weight: 700; }
+
+    @media (max-width: 980px) {
+      main { grid-template-columns: 1fr; }
+      .side { position: static; max-height: none; }
+      .score-scale, .rating-row { grid-template-columns: 1fr; }
+      .topbar { align-items: stretch; flex-direction: column; }
+      .progress-wrap { max-width: none; }
+      .page { padding: 20px; min-height: auto; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="topbar">
+      <div class="title">图像美学质量评分问卷</div>
+      <div class="progress-wrap">
+        <div class="progress-text">
+          <span id="progressLabel">说明页</span>
+          <span id="answeredLabel">已评分 0 / 0</span>
+        </div>
+        <div class="progress"><div id="progressBar"></div></div>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card page" id="pageRoot"></section>
+
+    <aside class="card side">
+      <h2>当前答卷统计</h2>
+      <div class="stat-grid">
+        <div class="stat-card">
+          <b id="statAnswered">0</b>
+          <span>已评分</span>
+        </div>
+        <div class="stat-card">
+          <b id="statAvg">-</b>
+          <span>当前均分</span>
+        </div>
+      </div>
+
+      <table class="mini-table">
+        <thead>
+          <tr>
+            <th>图片</th>
+            <th>评分</th>
+          </tr>
+        </thead>
+        <tbody id="statsBody"></tbody>
+      </table>
+
+      <div class="status">
+        完成后点击提交，结果会写入你的阿里云 OSS。若提交异常，可下载 CSV 备份。
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    /**********************************************************************
+     * 1. 把阿里云函数计算 HTTP 触发器 URL 粘贴到这里。
+     *    形如：https://xxxx.cn-hangzhou.fcapp.run
+     **********************************************************************/
+    const SUBMIT_API_URL = 'https://aliyun-handler-hdvlicjqar.cn-beijing.fcapp.run';
+
+    /**********************************************************************
+     * 2. 与后端 aliyun_fc_oss_handler.py 中的 SURVEY_TOKEN 保持一致。
+     *    注意：这不是严格安全密码，因为前端可见；主要用于区分项目和减少误提交。
+     **********************************************************************/
+    const SURVEY_TOKEN = 'image_aesthetic_2026';
+
+    /**********************************************************************
+     * 3. 请把你的 30 张图片 JSON 直接粘贴到这里。
+     *    页面会自动读取前 30 条带 image_url 的数据。
+     **********************************************************************/
+    const SAMPLES = [
+    {
+    "id": 10026,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "银行",
+    "custom_category": "门头/外立面",
+    "bucket": "middle",
+    "poiid": "B0FFFRYUZ8",
+    "image_url": "https://aos-comment.amap.com/B0FFFRYUZ8/comment/29dbdf34586ba8dbb95e373317ecea69_2048_2048_80.jpg",
+    "aes_mean": 5.011417865753174,
+    "show_poi_visited_num": 460,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "该图片展示了一座单层平顶建筑的外立面，墙面为米白色，顶部设有弧形装饰。屋顶上方立有红色的“山里红饭庄”五个大字。建筑正门为玻璃材质，门前左右各摆放一只白色石象，两侧种有红玫瑰，整体呈现出一种典型的乡村餐饮建筑风格。",
+        "image_quality_review": "从基础质量来看，图片表现良好。画面清晰度高，文字和建筑细节锐利，无明显的运动模糊或对焦问题。曝光控制得当，在充足的自然光线下，天空与建筑阴影处的细节均得到了保留。色彩还原自然，饱和度适中，没有出现色偏。分辨率足以支撑线上展示，噪点控制也处于较高水平。",
+        "image_aesthetic_review": "在美学构图上，图片采用了正面居中的拍摄方式，主体突出，视觉动线直接指向门头。然而，由于使用了广角镜头，画面边缘存在一定的透视畸变。背景中出现的电线和支架显得较为杂乱，破坏了画面的整洁度。色彩搭配上，红色的招牌在米色墙面的映衬下非常醒目，但整体视觉风格较为朴素，缺乏高级感和设计感。",
+        "high_level_semantic_review": "图片内容与给定的“银行”类目存在严重的语义冲突。画面明确展示的是一家“饭庄”，其建筑风格、装饰元素（如石象、花丛）以及核心文字信息均与银行的专业、严谨、金融属性完全不符，无法满足该场景下的视觉需求。",
+        "effectiveness_and_improvement": "由于类目完全不匹配，该图片在“银行门头”场景下不具备任何有效吸引力，甚至会产生严重的误导。若要提升，必须更换为真实的银行网点图片。若仅从建筑摄影角度改进，建议移除背景中的杂乱电线，调整拍摄角度以减少透视畸变，并选择光影层次更丰富的时段进行拍摄，以增强建筑的立体感。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 4,
+          "background_cleanliness": 2,
+          "visual_hierarchy": 3,
+          "color_harmony": 3,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.714
+  },
+  {
+    "id": 2122,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "银行",
+    "custom_category": "自助设备",
+    "bucket": "all",
+    "poiid": "B02C900CBA",
+    "image_url": "https://aos-comment.amap.com/B02C900CBA/comment/202511_14-10203_1763086843051_74379304.jpg",
+    "aes_mean": 4.866626501083374,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "画面中心为一个绿色的中国邮政信箱，立于灰色砖石铺就的人行道上。信箱主体印有黄色的“邮政信箱”字样及中国邮政标识，中部贴有详细的开箱时间表。背景可见部分电动车轮廓及街道建筑，呈现出写实的街头场景。",
+        "image_quality_review": "从基础质量维度看，图片表现尚可。清晰度较高，信箱表面的油漆纹理、金属质感以及开箱时间表上的细小文字均清晰可辨。曝光控制得当，自然光线下色彩还原准确，邮政绿与黄色字体的对比自然。画面无明显噪点或压缩损伤，分辨率足以支撑线上展示，能够真实反映物体的物理特征。",
+        "image_aesthetic_review": "在美学构图上，采用垂直居中构图，主体目标明确且视觉冲击力强。然而，构图略显局促，顶部边缘切分过紧，缺乏视觉延伸感。背景环境较为杂乱，右侧出现的电动车残影和不规则的地砖纹理干扰了视觉的纯净度。画面缺乏明显的视觉层次感和艺术光影处理，整体呈现出一种随意的记录式风格，缺乏设计感。",
+        "high_level_semantic_review": "该图片在语义层面存在严重偏差。虽然图片清晰地表达了“邮政信箱”这一主体，但与给定的“银行”类目及“自助设备”场景完全不匹配。信箱属于邮政物流设施，而非银行金融服务中的自助终端，这种核心信息的错位使其在指定业务场景下失去了参考价值。",
+        "effectiveness_and_improvement": "该图片在指定场景下的有效性极低，无法起到辅助用户识别银行自助设备的作用，甚至会产生误导。不足之处在于素材内容与标签类目完全背离。提升方向：应替换为银行网点内的ATM机、智能柜员机（STM）等真实的金融自助设备照片。拍摄时应注意背景的整洁，尽量避开无关杂物，并利用侧光突出设备的科技感与专业感。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 5,
+          "background_cleanliness": 2,
+          "visual_hierarchy": 3,
+          "color_harmony": 3,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 2,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 16.201
+  },
+  {
+    "id": 10017,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "丽人",
+    "custom_category": "产品/工具展示",
+    "bucket": "high",
+    "poiid": "B0FFHF7L1F",
+    "image_url": "https://aos-comment.amap.com/B0FFHF7L1F/comment/2a6079332fb7ded71972889f9ebb2325_2048_2048_80.jpg",
+    "aes_mean": 5.834782123565674,
+    "show_poi_visited_num": 426,
+    "gpt_inference_result": {
+      "overall_score": 4.9,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一个位于人体大臂及肩部的黑灰风格大面积纹身作品。纹身图案为一只细节丰富的东方神兽（类似麒麟或瑞兽），拥有狰狞的牙齿、灵动的毛发以及鳞片细节，并点缀有少许淡黄色火焰元素。背景为简洁的浅灰色墙面，模特穿着白色无袖上衣。",
+        "image_quality_review": "图像质量极佳。清晰度非常高，纹身的每一根线条、雾面的颗粒感以及细腻的明暗过渡都清晰可见。曝光控制精准，皮肤质感自然，黑色色块深邃而不失细节，高光处无过曝。画面无明显噪点或压缩痕迹，景深控制得当，使主体纹身从背景中脱颖而出，分辨率足以支撑高品质的线上展示。",
+        "image_aesthetic_review": "在美学表现上，构图顺应了人体肌肉线条，充分展示了纹身与身体结构的融合感。视觉层次分明，神兽的头部作为视觉中心非常突出，周围的云雾和铜钱元素形成了良好的视觉动线。色彩协调度极高，经典的黑灰调中加入微量的暖色点缀，提升了画面的灵动感。背景极其整洁，没有任何干扰元素，营造出一种专业且高级的艺术氛围。",
+        "high_level_semantic_review": "图片完美契合“丽人-产品/工具展示”场景。它不仅是一张纹身作品的记录，更是一张高质量的艺术展示照，准确传达了纹身师的技艺水平和审美风格，能够极好地满足用户对纹身效果参考的需求。",
+        "effectiveness_and_improvement": "该图片在吸引力和实用价值上表现卓越，能够迅速建立用户对纹身店或纹身师的信任感。画面信息密度适中，重点突出。若要进一步提升，可以尝试在光影上增加一些侧逆光，以更立体地勾勒出大臂的肌肉轮廓，从而增强纹身图案的立体空间感，但目前的状态已属于行业顶尖水平。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 5
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 5,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 5,
+          "color_harmony": 5,
+          "information_density": 5
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 5,
+          "core_information_expression": 5,
+          "style_emotion_fit": 5,
+          "effective_attraction": 5
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 16.476
+  },
+  {
+    "id": 9186,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "丽人",
+    "custom_category": "街景/周边",
+    "bucket": "all",
+    "poiid": "B0FFIIYEC9",
+    "image_url": "https://store.is.autonavi.com/showpic/ba8664cebc6e6155e306a06130985514",
+    "aes_mean": 4.018117666244507,
+    "show_poi_visited_num": 122,
+    "gpt_inference_result": {
+      "overall_score": 1.7,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一个平凡的城市街景。画面中心是一棵光秃秃的树干，背景是一栋带有多个商铺招牌的商业建筑，左侧停有一辆蓝色沃尔沃SUV。前景被大面积模糊的绿植遮挡，右侧边缘还有明显的遮挡物，整体构图显得杂乱无章。",
+        "image_quality_review": "图像质量较差。最明显的问题是前景存在严重的失焦模糊，大面积的虚化不仅没有起到引导作用，反而严重干扰了视觉清晰度。图片整体分辨率较低，细节表现力不足，背景建筑上的文字招牌模糊不清。色彩表现平淡且偏灰暗，缺乏必要的对比度和饱和度，导致画面看起来沉闷且不通透。",
+        "image_aesthetic_review": "从美学角度看，该图缺乏基本的构图逻辑。树干垂直切分画面，破坏了视觉的完整性；前景的遮挡物占据了过多空间且毫无美感，导致画面重心失衡。色彩协调度低，灰蒙蒙的色调无法营造出“丽人”类目应有的精致感或生活气息。视觉层次混乱，主体不突出，更像是一张随手拍摄的废片。",
+        "high_level_semantic_review": "虽然场景符合“街景/周边”的定义，但完全无法体现“丽人”类目的核心价值。画面中没有任何能够吸引目标用户、传达美感或提供有效商业信息的元素，无法引导用户产生正向的情绪联想或消费欲望。",
+        "effectiveness_and_improvement": "该图片在实际应用中有效性极低，属于质量较差的素材。改进建议：首先应避开前景遮挡物，确保画面干净整洁；其次应明确拍摄主体（如特定的丽人门店招牌），利用构图技巧（如三分法）突出重点；最后需提升拍摄设备的清晰度，并在光线较好的时间段拍摄，以增强色彩的生动感和画面的吸引力。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 2,
+          "exposure": 3,
+          "saturation_color_accuracy": 2,
+          "noise_blur": 2,
+          "resolution": 2
+        },
+        "mid_level_structure": {
+          "composition": 1,
+          "subject_prominence": 1,
+          "background_cleanliness": 2,
+          "visual_hierarchy": 1,
+          "color_harmony": 2,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 3,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 16.052
+  },
+  {
+    "id": 5587,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "汽车服务",
+    "custom_category": "门头/外立面",
+    "bucket": "all",
+    "poiid": "B0J05HXVFM",
+    "image_url": "https://aos-comment.amap.com/B0J05HXVFM/headerImg/7a4020f54ed4833bcfaeef86644a4f30_2048_2048_80.jpg",
+    "aes_mean": 4.5719687938690186,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "该图片为“京东养车”的品牌标识（Logo）数字绘图。画面采用大面积纯红色背景，中心位置是一个白色圆环，内含京东吉祥物小狗的头部形象，下方配有白色的“京东养车”简体中文字样，整体呈现极简主义设计风格。",
+        "image_quality_review": "从数字图像质量角度看，该图表现优秀。线条极其清晰锐利，没有任何锯齿或模糊现象。色彩饱和度高且均匀，符合品牌标准色值，无噪点或压缩损伤。分辨率足以支撑线上各类展示需求，作为平面设计素材其基础质量无可挑剔。",
+        "image_aesthetic_review": "在美学构图上，图片采用了经典的中心对称布局，视觉重心极其稳固。红白配色对比强烈，具有极高的视觉冲击力和品牌辨识度。主体元素突出，背景纯净无干扰，视觉层次简单明了。然而，作为一张平面设计图，它缺乏真实场景中的光影变化和空间深度。",
+        "high_level_semantic_review": "在高层语义层面，图片与给定场景“门头/外立面”存在严重偏差。虽然它准确表达了“汽车服务”的品牌身份，但它是一张Logo设计稿，而非真实的店面建筑外立面照片，无法提供物理空间的视觉参考。",
+        "effectiveness_and_improvement": "该图片作为品牌宣传图非常有效，但作为“门头/外立面”场景图则完全不合格。它无法让用户感知门店的真实规模、地理位置或装修质感。改进方向：应替换为真实的京东养车门店实拍图，展示包含招牌、入口及建筑整体轮廓的画面，以符合“外立面”这一特定场景的业务需求。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 5,
+          "subject_prominence": 5,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 5,
+          "color_harmony": 5,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 2,
+          "style_emotion_fit": 2,
+          "effective_attraction": 2
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 28.289
+  },
+  {
+    "id": 523,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "汽车服务",
+    "custom_category": "室内环境",
+    "bucket": "all",
+    "poiid": "B0FFJNOSJF",
+    "image_url": "https://aos-comment.amap.com/B0FFJNOSJF/comment/b1fedad3de29f236fb7b4e98e2256a2c_2048_2048_80.jpg",
+    "aes_mean": 5.302670717,
+    "show_poi_visited_num": 633,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "这是一张高品质的静物生活方式摄影图。画面中心是一个灰色长桌，上方摆放着现代感十足的铬合金调酒器、两杯粉色饮品、一瓶粉色陆莲花以及蓝色碟子盛放的柑橘切片。背景为淡紫色墙面，右侧点缀有粉色蕾丝窗帘，整体色调柔和统一。",
+        "image_quality_review": "从纯技术角度看，该图片的图像质量极高。画面清晰度卓越，主体细节（如花瓣纹理、金属反光）分明。曝光控制精准，利用柔和的自然光营造出细腻的明暗过渡，无过曝或欠曝区域。色彩饱和度自然，色调一致性极佳，没有任何噪点或压缩损伤，分辨率足以支持高质量的线上展示。",
+        "image_aesthetic_review": "美学表现非常出色。构图遵循平衡原则，物体错落有致，视觉动线流畅。主体突出，背景整洁且具有良好的空间层次感。色彩搭配极其和谐，粉色、紫色与灰色的组合营造出一种优雅、宁静的氛围。信息密度适中，既展现了丰富的细节，又保持了画面的极简美感。",
+        "high_level_semantic_review": "该图片在语义层面与给定的“汽车服务”类目完全不匹配。画面表达的是家居、休闲或餐饮场景，完全没有体现任何与汽车维修、保养、美容或展厅相关的核心信息，无法满足该场景下的用户视觉需求。",
+        "effectiveness_and_improvement": "尽管图片本身具有极高的美学价值，但由于其内容与“汽车服务”类目严重背离，作为该类目的素材是完全无效的。它不仅不能辅助用户判断，反而会造成严重的误导和困惑。改进方向是必须更换符合类目的视觉内容，例如展示整洁的汽车美容车间、专业的技师操作或高端的客户休息区，而非无关的生活静物。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 5
+        },
+        "mid_level_structure": {
+          "composition": 5,
+          "subject_prominence": 5,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 5,
+          "color_harmony": 5,
+          "information_density": 5
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 28.025
+  },
+  {
+    "id": 11203,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "公司企业",
+    "custom_category": "产品/服务展示",
+    "bucket": "middle",
+    "poiid": "B0FFKWMFSX",
+    "image_url": "https://aos-comment.amap.com/B0FFKWMFSX/comment/5665DB91_23DE_4602_BB08_BF9A1EC234E0_L0_001_923_200_1749453564954_26199752.jpg",
+    "aes_mean": 4.516663074493408,
+    "show_poi_visited_num": 266,
+    "gpt_inference_result": {
+      "overall_score": 2.3,
+      "aesthetic_review": {
+        "image_description": "该图片是一张手机微信聊天记录的截图。画面显示了用户与名为“美耐特磁控百叶窗”的商家客服之间的对话过程，内容涉及订单金额核对、预存抵扣规则的争议以及对客服沟通方式的抱怨。背景采用了带有淡色花卉和小兔图案的皮肤。",
+        "image_quality_review": "从基础物理质量来看，该截图表现合格。文字清晰可辨，没有明显的压缩失真或模糊现象。色彩还原准确，反映了手机屏幕的真实显示状态。曝光均匀，分辨率足以支撑移动端或网页端的清晰展示。然而，图片保留了手机顶部的状态栏（如时间、信号、电量等），作为企业展示素材显得不够专业，缺乏后期裁剪与净化处理。",
+        "image_aesthetic_review": "在美学层面，该图表现较差。构图仅为随机的社交软件对话流，缺乏视觉重心和艺术设计感。背景的卡通花卉图案虽然具有一定的装饰性，但与“公司企业”的专业形象不符，且略微干扰了文字信息的读取。画面缺乏视觉层次感，色彩搭配完全依赖于社交软件的UI，无法体现品牌调性或产品美感，整体视觉效果杂乱且随意。",
+        "high_level_semantics_review": "高层语义与给定场景严重冲突。作为“产品/服务展示”，该图片传递的是负面的沟通体验和规则误导，而非产品的核心价值或优质的服务质量。这种内容不仅无法吸引客户，反而会因展示纠纷而损害企业的公信力，完全背离了宣传初衷。",
+        "effectiveness_and_improvement": "该图片在指定场景下不仅无效，甚至具有负面影响。它展示了服务中的沟通障碍和客户的不满，属于严重的素材误用。改进建议：应立即替换为高质量的产品实景安装图或专业的产品细节图。如果必须展示服务沟通，应选择能够体现专业、耐心且最终达成正面结果的对话，并进行脱敏处理和美化排版，去除手机状态栏等无关干扰元素。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 2,
+          "subject_prominence": 2,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 2,
+          "color_harmony": 3,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 14.74
+  },
+  {
+    "id": 3875,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "公司企业",
+    "custom_category": "前台/接待区",
+    "bucket": "all",
+    "poiid": "B0KR17NJIC",
+    "image_url": "https://store.is.autonavi.com/showpic/f26deab21cbc96219d60d92531d806e8",
+    "aes_mean": 4.751054286956787,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 1.8,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一个深色木质办公桌，背景是略显陈旧且有污迹的白墙。桌面上散乱地摆放着笔记本电脑、计算器、各类文件、一个绿色的收款二维码牌以及一些杂物。桌后是一把黑色办公椅，镜头拍摄角度略微倾斜且俯视。",
+        "image_quality_review": "图像质量较差。画面存在明显的模糊感，可能是拍摄时抖动或对焦不准，导致文件上的文字和二维码细节无法辨识。光线昏暗且平淡，导致色彩显得暗沉、缺乏生机。墙面的污渍和杂乱的电线在低分辨率下显得更加突兀，整体画面纯净度低，存在明显的噪点和压缩痕迹。",
+        "image_aesthetic_review": "在美学构图上，画面采用了不稳定的倾斜视角，给人一种随意拍摄的廉价感。桌面物品堆放杂乱，缺乏视觉中心，读者的注意力被分散在计算器、纸张和杂乱的背景之间。背景墙面不够整洁，视觉层次感缺失，色彩搭配单调且显得脏旧，完全没有体现出办公环境应有的专业感和秩序美。",
+        "high_level_semantic_review": "该图片虽然在物理上属于办公场景，但完全不符合“公司企业前台/接待区”的语义预期。它未能传达出欢迎、专业或企业形象的信息，反而给人一种管理混乱、环境简陋的负面印象，无法起到吸引客户或展示公司实力的作用。",
+        "effectiveness_and_improvement": "该图片由于质量和美感极差，不建议在任何正式场合使用。改进建议：首先应清理环境，粉刷或遮挡污损墙面，收纳桌面杂物；其次，应使用水平视角拍摄，增加光照亮度以提升色彩明亮度；最后，应加入公司Logo或绿植等元素，营造出专业且温馨的接待氛围。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 2,
+          "exposure": 3,
+          "saturation_color_accuracy": 2,
+          "noise_blur": 2,
+          "resolution": 2
+        },
+        "mid_level_structure": {
+          "composition": 2,
+          "subject_prominence": 2,
+          "background_cleanliness": 1,
+          "visual_hierarchy": 2,
+          "color_harmony": 2,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 2,
+          "core_information_expression": 2,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 26.194
+  },
+  {
+    "id": 12332,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "文化传媒",
+    "custom_category": "活动/发布会现场",
+    "bucket": "low",
+    "poiid": "B0FFMH9SL0",
+    "image_url": "http://store.is.autonavi.com/showpic/4e1d25d39eeea6cdfcfc7b5b88058f56",
+    "aes_mean": 4.093337535858154,
+    "show_poi_visited_num": 5,
+    "gpt_inference_result": {
+      "overall_score": 1.6,
+      "aesthetic_review": {
+        "image_description": "该图片展示了一个文化场所的入口区域。画面透过玻璃门拍摄，内部有一名身着蓝色外套的男士正低头看手机，背景墙上贴满了密集的文字公示栏。门口拉着红白相间的警戒线，左侧放置着一台自助服务终端，整体环境显得较为杂乱且处于非正式状态。",
+        "image_quality_review": "图像基本质量较差。画面存在明显的雾化感，可能是由于镜头污浊或逆光拍摄导致的严重光晕，导致整体清晰度大幅下降，细节模糊。曝光处理不当，室内光线昏暗且对比度低，色彩显得灰暗、不自然。分辨率较低，放大后噪点明显，无法满足高质量线上展示的需求。",
+        "image_aesthetic_review": "在美学构图上，画面缺乏设计感。黑色的门框严重遮挡了视线，将画面生硬地分割，视觉动线混乱。主体不突出，读者的注意力在警戒线、反光的玻璃和模糊的背景文字之间游离。背景极其凌乱，红白警戒线和随意的桌椅破坏了画面的整洁度与专业感，缺乏视觉层次与色彩协调性。",
+        "high_level_semantic_review": "图片与“活动/发布会现场”这一场景严重不符。它更像是一个处于维护中或日常办公状态的办事大厅入口，完全没有体现出文化传媒行业应有的专业性、仪式感或活动氛围，核心信息表达极度匮乏。",
+        "effectiveness_and_improvement": "该图片由于质量低下且场景错位，完全不具备使用价值。改进建议：首先需清洁镜头并调整拍摄角度，避开杂乱的门框和警戒线；其次应在活动正式举办、灯光布置完成时拍摄，突出活动主题背景板或关键人物；最后需注意构图的平衡感，确保画面干净、明亮且具有吸引力。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 2,
+          "exposure": 2,
+          "saturation_color_accuracy": 2,
+          "noise_blur": 2,
+          "resolution": 2
+        },
+        "mid_level_structure": {
+          "composition": 2,
+          "subject_prominence": 2,
+          "background_cleanliness": 1,
+          "visual_hierarchy": 2,
+          "color_harmony": 2,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.058
+  },
+  {
+    "id": 12603,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "文化传媒",
+    "custom_category": "办公空间/室内环境",
+    "bucket": "middle",
+    "poiid": "B001B0IV6X",
+    "image_url": "https://aos-comment.amap.com/B001B0IV6X/comment/c7930b9d878952a6b265676ba4e2d353_2048_2048_80.jpg",
+    "aes_mean": 3.655208110809326,
+    "show_poi_visited_num": 4795,
+    "gpt_inference_result": {
+      "overall_score": 1.2,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一个室内角落的俯视视角，画面左侧是一个带有蓝色标识的白色涂料桶，中间是带有红色花纹的浅色窗帘，地面为木质地板。然而，画面右下角被一个巨大的、模糊的肉色物体（疑似手指）遮挡，占据了近一半的构图，严重干扰了视觉呈现。",
+        "image_quality_review": "图像质量极差。最明显的问题是严重的镜头遮挡，导致画面大面积模糊且产生粉色光晕，完全丧失了清晰度。窗户区域存在严重的曝光过度，细节丢失殆尽。整体画面显得灰暗且缺乏锐度，噪点控制不佳，分辨率和细节表现均无法达到线上展示的最低标准，属于典型的拍摄失误作品。",
+        "image_aesthetic_review": "在美学表现上，该图几乎没有任何艺术价值。构图由于手指的遮挡而完全破碎，缺乏视觉中心和平衡感。主体不明确，背景杂乱且毫无章法。色彩因遮挡产生的散光而显得脏乱，缺乏协调性。画面没有任何视觉层次感，无法引导观众的视线，信息传递极度混乱。",
+        "high_level_semantic_review": "图片完全不符合“文化传媒”类目下的“办公空间”场景需求。它不仅没有传达出任何专业、职场或传媒相关的氛围，反而呈现出一种随意、低质的私人生活杂物堆放感，完全无法满足商业或展示用途。",
+        "effectiveness_and_improvement": "该图片在当前场景下完全无效，属于不可用的废片。主要改进方向：首先必须确保镜头前无遮挡；其次应重新选择具有代表性的办公元素作为主体，如办公桌、书架或传媒设备；最后需改善光线环境，避免直射光导致的过曝，并采用合理的构图法（如三分法）来增强画面的专业感和美感。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 1,
+          "exposure": 2,
+          "saturation_color_accuracy": 2,
+          "noise_blur": 1,
+          "resolution": 2
+        },
+        "mid_level_structure": {
+          "composition": 1,
+          "subject_prominence": 1,
+          "background_cleanliness": 1,
+          "visual_hierarchy": 1,
+          "color_harmony": 2,
+          "information_density": 1
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.896
+  },
+  {
+    "id": 10903,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "教育培训",
+    "custom_category": "教学场景",
+    "bucket": "high",
+    "poiid": "B000A8859I",
+    "image_url": "https://aos-comment.amap.com/B000A8859I/comment/f63201c8979366704d89eee5876cd52b_2048_2048_80.jpg",
+    "aes_mean": 4.738766193389893,
+    "show_poi_visited_num": 410894,
+    "gpt_inference_result": {
+      "overall_score": 3.6,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一辆教练车的驾驶位内景。画面以驾驶员视角呈现，清晰捕捉了方向盘、仪表盘、侧后视镜以及教练车特有的辅助圆镜。车窗外是阴雨绵绵的秋季街景，橙红色的树木在雾气中若隐若现，整体色调沉稳且具有生活气息。",
+        "image_quality_review": "图像的基础质量表现良好。清晰度极佳，方向盘的缝线纹理、中控台的塑料质感以及车窗上的雨滴都清晰可见。曝光处理符合阴雨天的自然光效，虽然车内光线较暗，但暗部细节保留尚可，没有明显的死黑。色彩准确性高，自然还原了雨天的冷调与秋叶的暖色对比。画面纯净，无明显噪点或压缩痕迹，分辨率足以满足线上展示需求。",
+        "image_aesthetic_review": "在美学构图上，采用了自然的斜向透视，引导视觉从左侧车门流向中心的方向盘。主体突出，驾驶舱的空间感得到了较好体现。然而，背景整洁度稍欠，右上角的后视镜及垂下的线缆略显杂乱，破坏了画面的简洁感。色彩协调度较好，深色内饰与窗外景物形成了冷暖对比，增强了画面的视觉层次，但整体氛围略显压抑。",
+        "high_level_semantic_review": "图片准确契合了“教育培训-教学场景”下的驾驶培训细分领域。通过辅助后视镜这一关键元素，明确传达了教练车的身份。虽然没有人物出现，但这种“第一人称视角”能让潜在学员产生代入感，符合场景预期。",
+        "effectiveness_and_improvement": "该图片作为驾驶培训的宣传素材具有一定的实用价值，真实感强。不足之处在于画面缺乏教学互动感，且阴雨天的天气可能给用户带来负面的心理暗示（如练车辛苦、视线不佳）。建议改进方向：选择光线更明亮的晴天拍摄以提升积极情绪，或加入教练指导、学员握方向盘的局部特写，以强化“教学”这一核心信息的表达，增强吸引力。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4.5,
+          "exposure": 4.0,
+          "saturation_color_accuracy": 4.2,
+          "noise_blur": 4.5,
+          "resolution": 4.5
+        },
+        "mid_level_structure": {
+          "composition": 3.5,
+          "subject_prominence": 4.0,
+          "background_cleanliness": 3.0,
+          "visual_hierarchy": 3.5,
+          "color_harmony": 4.0,
+          "information_density": 3.5
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 3.5,
+          "core_information_expression": 3.0,
+          "style_emotion_fit": 3.2,
+          "effective_attraction": 2.8
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 17.373
+  },
+  {
+    "id": 7870,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "教育培训",
+    "custom_category": "教学场景",
+    "bucket": "all",
+    "poiid": "B0J0VMVB84",
+    "image_url": "https://aos-comment.amap.com/B0J0VMVB84/comment/202508_07-18235_1754562244275_75620566.jpg",
+    "aes_mean": 4.397193431854248,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 2.8,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一辆白色的教练车停放在户外的驾驶培训场地内。车身侧面印有红色的驾校名称字样，背景包含茂密的绿色树木、围栏以及远处的其他车辆。整张图片呈现出明显的90度逆时针旋转，导致视觉重心失衡。",
+        "image_quality_review": "从基础质量来看，图片的清晰度表现良好，教练车的主体轮廓和车身文字清晰可辨。曝光控制较为自然，在阴天光线下没有出现明显的过曝或欠曝现象。噪点控制得当，画面比较干净。然而，图片的分辨率虽然足够，但由于拍摄角度或后期保存问题，图片方向完全错误，这是严重的质量缺陷，直接导致其无法在未经处理的情况下直接使用。",
+        "image_aesthetic_review": "在美学表现上，错误的构图方向严重破坏了视觉体验。虽然主体位于画面中心，但横向场景纵向呈现，违背了人类的观察习惯。背景显得较为杂乱，树木与围栏的线条在旋转后显得支离破碎，缺乏视觉层次感。色彩方面偏向灰冷调，饱和度较低，整体氛围显得沉闷，缺乏教育培训类场景应有的积极与专业感。",
+        "high_level_semantic_review": "图片内容虽然符合“教育培训-教学场景”的类目（驾驶培训），但由于展示方式极不专业，未能有效传达出教学的严谨性。核心信息（教练车）虽然存在，但因角度问题导致识别效率低下，难以引起受众的正面兴趣。",
+        "effectiveness_and_improvement": "该图片目前的使用价值较低，主要障碍在于错误的图像方向。改进建议：首先必须将图片顺时针旋转90度恢复正常视角；其次，建议对画面进行二次裁切，去除顶部过多的水泥地面和背景杂物，以突出教练车主体；最后，可以适当提升画面的对比度与饱和度，使色彩更加明亮生动，从而提升教学场景的吸引力和专业度。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 3,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 1,
+          "subject_prominence": 3,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 2,
+          "color_harmony": 3,
+          "information_density": 3
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 4,
+          "core_information_expression": 2,
+          "style_emotion_fit": 2,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 30.89
+  },
+  {
+    "id": 11120,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "休闲娱乐",
+    "custom_category": "主题/装饰细节",
+    "bucket": "low",
+    "poiid": "B0FFKW0N06",
+    "image_url": "https://aos-comment.amap.com/B0FFKW0N06/comment/content_media_external_file_11120_1765247558910_44541853.jpg",
+    "aes_mean": 4.922562122344971,
+    "show_poi_visited_num": 58,
+    "gpt_inference_result": {
+      "overall_score": 2.8,
+      "aesthetic_review": {
+        "image_description": "该图片展示了一个多层木质展示架，陈列着深蓝色和橙色的高档茶叶礼盒。架子上还点缀有一盆微型绿植、一块蓝色亚克力宣传牌以及相关的证书奖牌。整张图片呈现出一种商务休闲或高端茶室的装饰氛围，但图片拍摄角度为横向旋转状态。",
+        "image_quality_review": "在基本质量方面，图片的分辨率足以辨认包装上的文字，色彩还原较为自然，木质纹理与包装盒的色泽对比鲜明。然而，图片存在明显的拍摄角度问题，90度的旋转错误严重影响了观感。曝光方面，包装盒表面的高光反射略显刺眼，暗部细节略有丢失，且在室内光线下存在轻微的噪点和对焦虚化现象。",
+        "image_aesthetic_review": "从美学角度看，画面的色彩协调度较好，深蓝与暖橙的撞色在木质背景下显得稳重而不失活力。但构图上存在严重缺陷，横置的画面破坏了视觉动线，导致主体不突出且缺乏层次感。作为“装饰细节”场景，画面信息量过于杂乱，未能通过景深或构图技巧引导用户关注特定的美学元素，整体视觉效果显得业余。",
+        "high_level_semantic_review": "图片虽然符合休闲娱乐类目下的茶文化主题，但作为“装饰细节”场景，其表达不够精准。由于旋转问题，核心信息（如品牌名、宣传语）的传递受阻，无法让用户在第一时间感受到装饰的精致感或主题氛围，场景适配度较低。",
+        "effectiveness_and_improvement": "该图片目前的使用有效性较低，主要受限于错误的图片方向。改进建议：首先需将图片旋转至正确的垂直方向；其次，应采用大光圈拍摄，聚焦于某一个精致的茶叶罐或绿植细节，虚化背景中杂乱的货架线条，以增强“装饰细节”的艺术感；最后，需注意控制金属或塑料材质表面的反光，使画面质感更加高级。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 3,
+          "exposure": 3,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 3,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 2,
+          "subject_prominence": 3,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 2,
+          "color_harmony": 4,
+          "information_density": 3
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 2,
+          "core_information_expression": 2,
+          "style_emotion_fit": 3,
+          "effective_attraction": 2
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 17.012
+  },
+  {
+    "id": 10314,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "休闲娱乐",
+    "custom_category": "主题/装饰细节",
+    "bucket": "middle",
+    "poiid": "B001D10WGF",
+    "image_url": "https://aos-comment.amap.com/B001D10WGF/comment/2025-09-12-22-19-26%2B88EDF543-17D2-4E98-AC48-DC4B94CCC09_1757686770876_90346578.jpg",
+    "aes_mean": 5.344746112823486,
+    "show_poi_visited_num": 3466,
+    "gpt_inference_result": {
+      "overall_score": 2.8,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一个具有现代中式风格的休闲场所长廊。画面中，白色墙面嵌有黑色线条边框，并装饰有带有红色流苏的中式壁灯和山水装饰画。地面采用灰色大理石纹理瓷砖，中心有黑色几何线条拼花。整体色调以黑白灰为主，点缀少量红色与金色。",
+        "image_quality_review": "从基础质量来看，图片的清晰度尚可，能够辨认出地面瓷砖的纹理和壁灯的细节。曝光控制较为合理，室内灯光虽多但未出现严重的过曝现象，色彩还原也比较准确，保持了冷色调空间的质感。然而，图片存在严重的方向性问题，画面逆时针旋转了90度，这属于基础拍摄或上传错误，严重影响了用户的正常观看体验。",
+        "image_aesthetic_review": "在美学表现上，由于图片方向错误，原本应具有纵深感的单点透视构图变得极其不稳定，视觉动线混乱。作为“装饰细节”场景，该图取景过广，更像是一张空间全景图，导致壁灯、流苏、挂画等具体细节在重复的走廊结构中被稀释，缺乏明确的视觉中心。画面虽然色彩协调，但由于构图失误，无法体现出中式装饰的精致感与韵律美。",
+        "high_level_semantic_review": "图片虽然传达了现代中式的装修风格，但与“装饰细节”这一具体场景适配度较低。由于缺乏对特定物件的特写，用户难以快速捕捉到设计亮点。错误的画面朝向也大幅降低了信息的有效传达效率，不符合专业展示的需求。",
+        "effectiveness_and_improvement": "该图片目前的使用效果较差，主要障碍在于错误的画面旋转。改进建议：首先需将图片旋转至正确的垂直方向；其次，若要体现“装饰细节”，应采用中景或近景构图，聚焦于某一个壁灯及其流苏，或者地面拼花的细节，利用大光圈虚化背景，从而突出主体。目前这种全景式的侧翻构图无法起到吸引用户或辅助决策的作用。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 1,
+          "subject_prominence": 2,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 2,
+          "color_harmony": 4,
+          "information_density": 3
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 2,
+          "core_information_expression": 2,
+          "style_emotion_fit": 3,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 16.973
+  },
+  {
+    "id": 2707,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "出入口",
+    "custom_category": "其它",
+    "bucket": "all",
+    "poiid": "B0FFG0ZK4T",
+    "image_url": "https://aos-comment.amap.com/B0FFG0ZK4T/comment/content_media_external_file_1000045063_ss__1764511258655_51156188.jpg",
+    "aes_mean": 4.906060695648193,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 2.1,
+      "aesthetic_review": {
+        "image_description": "画面展示了一碗内容丰富的盖饭，包含切片香肠、肉燥、炒面、腌制萝卜丁和土豆丝等多种食材，盛放在一个黑色大碗中，背景为简洁的白色平面，整体呈现出浓郁的生活气息。",
+        "image_quality_review": "从图像基础质量来看，该图片表现良好。清晰度较高，食材的细节如香肠的质感和肉燥的油脂感均清晰可见。曝光充足且分布均匀，没有明显的过曝或欠曝区域。色彩还原准确，饱和度适中，真实地反映了食物的自然色泽。画面纯净，无明显噪点或压缩损伤，分辨率足以满足线上展示需求。",
+        "image_aesthetic_review": "在美学构图上，采用斜俯视角度，主体碗部占据画面核心，背景干净整洁，有效突出了主体。然而，碗内食材堆叠较为杂乱，缺乏明确的视觉层次感和构图动线。色彩虽然丰富但由于食材种类过多且分布细碎，导致视觉重心分散，信息密度过载，整体美感表现平平。",
+        "high_level_semantic_review": "在高层语义层面，该图片存在严重的类目错配问题。图片内容为餐饮食品，与给定的“出入口”类目完全无关，无法表达任何关于场景出入、通道或地理标识的核心信息，语义适配度极低。",
+        "effectiveness_and_improvement": "该图片在指定类目下完全无效。虽然作为一张美食照片其基础质量合格，但由于与“出入口”场景完全不符，无法起到引导、说明或吸引目标用户的作用。改进建议：必须更换符合类目定义的图片，如拍摄具体的建筑大门、园区入口或通道标识，并确保主体特征鲜明，以满足场景的功能性需求。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 4,
+          "background_cleanliness": 4,
+          "visual_hierarchy": 2,
+          "color_harmony": 3,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 13.151
+  },
+  {
+    "id": 1880,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "出入口",
+    "custom_category": "门头",
+    "bucket": "all",
+    "poiid": "B02130VSYU",
+    "image_url": "http://store.is.autonavi.com/showpic/9b1f4742179151c8cbe32f7bb9283900",
+    "aes_mean": 5.057143926620483,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 2.1,
+      "aesthetic_review": {
+        "image_description": "这张图片从高处俯拍了夜晚的中国农业银行大楼。画面中心为灯火通明的高层建筑，底部可见银行门头及街道车流。由于是隔着窗户拍摄，画面上方和右侧出现了明显的室内灯光反射和玻璃污渍，整体色调偏暗且带有明显的朦胧感。",
+        "image_quality_review": "图像质量较差。最严重的问题在于强烈的环境反射，画面上方的灯影和玻璃上的虚影严重干扰了视觉清晰度。受限于拍摄环境和光线，画面存在明显的噪点和运动模糊，导致建筑细节和街道纹理丢失。曝光控制不佳，高光处的反射光过亮，而暗部细节几乎不可见，整体分辨率感官较低，不符合高质量展示标准。",
+        "image_aesthetic_review": "美学表现欠佳。构图虽然尝试将主体居中，但由于玻璃反射占据了大量画幅，导致视觉重心偏移，画面平衡感被破坏。背景极度不整洁，室内倒影与室外夜景重叠，消解了画面的空间层次感。色彩因玻璃隔绝显得灰暗、不通透，缺乏夜景应有的明快与质感，视觉动线被杂乱的反射光线切断。",
+        "high_level_semantic_review": "场景适配度较低。虽然图片包含“出入口”元素，但作为“门头”场景，其视角过远，主体门头在画面中占比极小且模糊，无法清晰传达门头的具体特征或引导功能，更多是一张失败的城市夜景随拍。",
+        "effectiveness_and_improvement": "该图片在当前类目下几乎没有使用价值。主要不足在于拍摄环境干扰（反射）、清晰度不足以及视角偏差。提升方向：应在室外或贴近玻璃消除反射进行拍摄；调整拍摄角度，聚焦于门头区域而非整栋大楼；使用脚架或长曝光模式提升夜景画质，确保招牌文字和建筑细节清晰可见。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 2,
+          "exposure": 3,
+          "saturation_color_accuracy": 3,
+          "noise_blur": 2,
+          "resolution": 3
+        },
+        "mid_level_structure": {
+          "composition": 2,
+          "subject_prominence": 2,
+          "background_cleanliness": 1,
+          "visual_hierarchy": 2,
+          "color_harmony": 3,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 2,
+          "core_information_expression": 2,
+          "style_emotion_fit": 2,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.095
+  },
+  {
+    "id": 12553,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "金融保险",
+    "custom_category": "宣传/信息物料",
+    "bucket": "middle",
+    "poiid": "B0FFJNLN2L",
+    "image_url": "https://aos-comment.amap.com/B0FFJNLN2L/comment/content_media_external_images_media_100015670_1730609885984_83758273.jpg",
+    "aes_mean": 3.9261159896850586,
+    "show_poi_visited_num": 667,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "该图片展示了一款“风帆（Sail）”品牌的汽车蓄电池及其蓝色外包装盒，背景为纯白色。画面上方配有品牌Logo及黑色加粗文字“全国市区免费上门安装”。整体构图采用电商产品图常见的居中对称布局，底部带有淡蓝色的倒影效果。",
+        "image_quality_review": "图像的基本质量表现一般。虽然主体清晰、曝光充足，能够准确识别产品型号与文字信息，但细节处存在明显瑕疵。电池边缘及文字轮廓可见明显的锯齿感和压缩痕迹，显示出分辨率较低或经过了过度压缩。色彩饱和度尚可，蓝色包装与黑色电池对比鲜明，但底部的倒影处理显得较为生硬，缺乏真实的光影过渡，整体画质未能达到高质量宣传物料的标准。",
+        "image_aesthetic_review": "在美学表现上，该图属于典型的功能性电商白底图，缺乏艺术美感。构图过于死板，虽然主体突出且背景整洁，但视觉层次感较弱，文字与产品的排版显得割裂，缺乏设计上的关联性。色彩搭配虽然协调，但整体视觉语言过于廉价，未能体现出金融保险行业应有的专业感、信赖感或高端感。字体选择过于常规，缺乏品牌调性的传达。",
+        "high_level_semantic_review": "图片内容与给定的“金融保险”类目存在显著的语义偏差。画面核心主体是汽车配件，属于汽车后市场或硬件销售范畴。即便作为车险的增值服务宣传，其视觉风格也完全偏向于零件零售，未能传达出保险行业核心的风险保障或金融服务属性，场景适配度极低。",
+        "effectiveness_and_improvement": "作为宣传物料，该图片在传达“免费上门安装”这一核心信息上是有效的，但作为金融保险类素材则完全不合格。改进方向：首先应提升图像分辨率，消除边缘锯齿；其次，若用于保险宣传，应加入服务场景（如维修师傅上门、车主安心的表情等）以增强情感连接；最后，应优化排版设计，使用更具专业感的字体和品牌辅助图形，使画面符合金融行业的视觉预期。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 3,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 3,
+          "resolution": 2
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 5,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 3,
+          "color_harmony": 4,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 4,
+          "style_emotion_fit": 1,
+          "effective_attraction": 2
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 22.768
+  },
+  {
+    "id": 398,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "金融保险",
+    "custom_category": "服务场景",
+    "bucket": "all",
+    "poiid": "B0IBMZ4201",
+    "image_url": "https://aos-comment.amap.com/B0IBMZ4201/comment/content_media_external_file_100014501_1746858742868_76757784.jpg",
+    "aes_mean": 5.328933000564575,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 2.2,
+      "aesthetic_review": {
+        "image_description": "图中近景展示了一份撒满可可粉、巧克力碎和蓝莓的提拉米苏甜点，背景中模糊可见一份意式肉酱面。画面整体色调偏暖，呈现出一种典型的餐厅用餐氛围，构图采用了对角线分布，强调了甜点的细节。",
+        "image_quality_review": "图像质量表现一般。虽然前景主体清晰，但画面存在明显的后期处理痕迹，噪点控制不佳，尤其在阴影区域有颗粒感。色彩饱和度过高，导致整体色调偏红偏橘，色彩准确性欠佳。曝光略微过度，使得白色盘子的边缘细节有所丢失，分辨率仅能满足社交媒体展示，不具备专业商业素材的细腻感。",
+        "image_aesthetic_review": "美学表现上，构图利用浅景深突出了甜点，但背景中的面条色块较大且颜色鲜艳，对主体产生了一定的视觉干扰。色彩搭配虽然统一在暖色调下，但由于滤镜感过重，显得不够自然。视觉层次感尚可，但缺乏高级感，整体风格更趋向于随手的探店记录，而非经过精心设计的商业摄影作品。",
+        "high_level_semantic_review": "该图片与给定的“金融保险”类目及“服务场景”完全不匹配。画面内容纯粹为餐饮美食，无法传递任何关于金融服务、保险保障、专业咨询或财富管理的语义信息，场景适配度极低。",
+        "effectiveness_and_improvement": "由于图片内容与类目严重背离，其在金融保险场景下完全无效，甚至会误导用户。改进方向应彻底更换素材：若要体现金融服务场景，应拍摄银行柜台、理财顾问与客户交谈、或体现专业办公环境的画面。如果必须保留生活化气息，也应加入金融元素（如信用卡支付、保险合同、金融APP界面等）以建立关联。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 3,
+          "exposure": 3,
+          "saturation_color_accuracy": 2,
+          "noise_blur": 2,
+          "resolution": 3
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 4,
+          "background_cleanliness": 2,
+          "visual_hierarchy": 3,
+          "color_harmony": 3,
+          "information_density": 3
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 26.916
+  },
+  {
+    "id": 5949,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "美食",
+    "custom_category": "室内环境",
+    "bucket": "all",
+    "poiid": "B0KUAD41WA",
+    "image_url": "https://aos-comment.amap.com/B0KUAD41WA/comment/21ce695fa311ffcd6bc6bf46c1f00140_2048_2048_80.jpg",
+    "aes_mean": 4.795076370239258,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 1.8,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一个狭窄的室内卫浴空间。画面中心是一个白色的抽水马桶，上方安装有圆柱形储水式电热水器。左侧墙壁挂有黑色淋浴花洒，右侧被一扇带有黑色长拉手的磨砂玻璃移门部分遮挡。墙面为浅色仿大理石纹理瓷砖，地面铺设灰色地砖。",
+        "image_quality_review": "从基础质量来看，图片的清晰度尚可，马桶上的标签文字和热水器的接线细节基本可见。曝光表现平平，整体光线较为平淡，缺乏明暗对比带来的质感。色彩方面，画面呈现出一种冷淡且略显灰暗的色调，饱和度较低。虽然没有明显的运动模糊或严重的数字噪点，但由于拍摄环境光线不足，暗部细节略显破碎，整体画质仅能满足记录性需求，缺乏商业展示的精致感。",
+        "image_aesthetic_review": "在美学构图上，该图片表现较差。拍摄视角局促，右侧巨大的门框和拉手占据了近三分之一的画幅，严重遮挡了视觉空间并破坏了画面平衡。背景极其杂乱，外露的白色水管、交错的电线、插座以及墙上残留的黄色胶带痕迹，都极大地干扰了视觉美感。画面缺乏视觉层次感，主体不突出，各种卫浴设备挤压在狭小的空间内，给人一种压抑且凌乱的负面视觉感受。",
+        "high_level_semantic_review": "该图片与给定的“美食”类目存在严重的语义冲突。画面内容完全属于家居卫浴场景，无法传递任何与食物、烹饪或餐饮相关的视觉信息。这种类目错位导致图片在指定场景下完全失去了使用价值，无法引起用户的食欲或正面情感共鸣。",
+        "effectiveness_and_improvement": "该图片在“美食”类目下属于无效素材。其核心问题在于类目完全不匹配，且图片本身美感极低。若作为卫浴产品展示，建议：1. 重新构图，移除遮挡物，采用广角镜头增加空间感；2. 进行环境整理，隐藏外露的管线和杂乱标签；3. 改善照明，使用柔和的暖色调灯光营造温馨洁净的氛围。在当前“美食”类目要求下，建议直接更换为符合主题的高质量食品图片。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 3,
+          "exposure": 3,
+          "saturation_color_accuracy": 2,
+          "noise_blur": 4,
+          "resolution": 3
+        },
+        "mid_level_structure": {
+          "composition": 1,
+          "subject_prominence": 2,
+          "background_cleanliness": 1,
+          "visual_hierarchy": 2,
+          "color_harmony": 2,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 14.356
+  },
+  {
+    "id": 732,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "美食",
+    "custom_category": "街景/周边",
+    "bucket": "all",
+    "poiid": "B073C04CM4",
+    "image_url": "https://aos-comment.amap.com/B073C04CM4/comment/content_media_external_file_1000025976_ss__1761105050158_34082596.jpg",
+    "aes_mean": 5.521380424499512,
+    "show_poi_visited_num": 20488,
+    "gpt_inference_result": {
+      "overall_score": 3.8,
+      "aesthetic_review": {
+        "image_description": "这张图片采用竖构图仰拍视角，展现了高楼林立、招牌密集的典型城市商业街景。画面中可以看到“bapsang”、“Iyara”等餐饮店招，以及香港特色的密集建筑外墙、空调外机和狭窄的街道空间，天空呈现阴天特有的灰白色。",
+        "image_quality_review": "图像基础质量良好。清晰度较高，建筑物的纹理、窗户细节以及远近不一的店招文字均清晰可辨。曝光控制较为均衡，虽然是阴天环境，但街道暗部细节保留较好，没有明显的过曝或欠曝区域。色彩还原自然，无明显色偏。画面纯净度高，噪点控制得当，分辨率足以支撑线上各类终端的展示需求。",
+        "image_aesthetic_review": "在美学表现上，仰拍视角成功营造了城市森林的压迫感与繁华感，符合“街景”的场景特征。构图上利用了建筑的垂直线条引导视觉向上延伸，但左侧边缘的遮挡物略显沉重，稍微破坏了画面的平衡感。背景虽然杂乱（电线、空调机），但这种“乱”恰恰体现了真实的市井气息。色彩以灰调为主，点缀以店招的绿、红、黄，视觉层次感尚可，但缺乏一个强有力的视觉中心点。",
+        "high_level_semantic_review": "图片与“美食-街景/周边”的场景适配度极高。它准确地传达了餐厅所处的地理环境和社区氛围，让用户能够直观感受到该区域的繁华程度和建筑风格，具有很强的实地参考价值。",
+        "effectiveness_and_improvement": "该图片作为美食类目的周边环境介绍是非常有效的，能帮助用户建立对目的地空间环境的认知。不足之处在于艺术感染力稍欠，画面整体色调偏冷、偏灰，缺乏吸引食客的“烟火气”或“温馨感”。提升方向：建议在光线更具层次感的时间段（如傍晚华灯初上时）拍摄，利用霓虹灯光增加画面的色彩丰富度与吸引力，并微调构图以减少边缘无关物体的干扰。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 3,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 4,
+          "color_harmony": 3,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 5,
+          "core_information_expression": 4,
+          "style_emotion_fit": 4,
+          "effective_attraction": 3
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 18.201
+  },
+  {
+    "id": 10063,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "政府机构",
+    "custom_category": "建筑外观/整体风貌",
+    "bucket": "high",
+    "poiid": "B0FFG86NJH",
+    "image_url": "https://aos-comment.amap.com/B0FFG86NJH/comment/C38A1061_8948_4FE1_8025_61319007E653_L0_001_2000_150_1766368375433_38626537.jpg",
+    "aes_mean": 5.258180618286133,
+    "show_poi_visited_num": 7281,
+    "gpt_inference_result": {
+      "overall_score": 4.6,
+      "aesthetic_review": {
+        "image_description": "这张航拍照片展示了一个现代化的驾驶员考试中心或训练场地的全景。画面中，深色的沥青路面上清晰地绘制着各种交通标线，包括S弯道、侧方停车位和倒车入库区域，其间点缀着整齐的绿色草坪。几辆白色教练车和少量工作人员分布在场地内，整体呈现出高度的秩序感。",
+        "image_quality_review": "图像基本质量极佳。全景视角下，画面的清晰度非常高，路面的标线细节、车辆轮廓以及草坪的质感都清晰可见。曝光控制精准，在明亮的日光下，沥青的深色与草坪的亮绿色对比鲜明，且没有出现过曝或暗部细节丢失的情况。色彩还原自然，饱和度适中，没有任何明显的噪点或压缩痕迹，分辨率足以支撑高质量的线上展示。",
+        "image_aesthetic_review": "在美学表现上，高空俯视角度赋予了画面极强的几何美感和节奏感。S型曲线的重复排列与停车区域的直线条形成了动静结合的视觉效果。构图均衡，利用路面线条引导视觉动线，使复杂的场地布局显得井然有序。色彩协调度高，黑、绿、白、黄的配色方案既符合功能性需求，又在视觉上产生了清爽、专业的工业美感。",
+        "high_level_semantic_review": "该图片精准地传达了政府职能部门下属设施（如车管所考场）的整体风貌。它不仅展示了设施的规模和现代化程度，还通过整洁的场景表达了规范、严谨的管理氛围，完全符合“政府机构-建筑外观/整体风貌”的场景需求。",
+        "effectiveness_and_improvement": "作为一张展示政府公共服务设施的图片，其有效性极高，能够让用户一眼识别出场所的功能并对其专业性产生信任。图片在信息密度和简洁度之间取得了很好的平衡。若要进一步提升，可以尝试在光影更具层次感的金色黎明或黄昏时段拍摄，利用长投影增加建筑与设施的立体感，从而提升画面的艺术感染力。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 5
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 5,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 4,
+          "color_harmony": 4,
+          "information_density": 5
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 4,
+          "core_information_expression": 5,
+          "style_emotion_fit": 4,
+          "effective_attraction": 4
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 17.011
+  },
+  {
+    "id": 10613,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "政府机构",
+    "custom_category": "公示信息/公告栏",
+    "bucket": "high",
+    "poiid": "B0FFGQ3693",
+    "image_url": "https://aos-comment.amap.com/B0FFGQ3693/comment/content_media_external_file_1000003788_ss__1751591012377_39205824.jpg",
+    "aes_mean": 4.6007163524627686,
+    "show_poi_visited_num": 56655,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一件浅蓝色防晒衣袖子的近景特写。画面中心是一个六边形的紫色图标，上面印有太阳和反射箭头的符号，暗示其具备防晒功能。背景是模糊的户外环境，隐约可见树干和地面，采用了浅景深效果来突出袖子上的标识细节。",
+        "image_quality_review": "从纯技术角度看，图像质量非常出色。清晰度极高，能够清晰辨认出织物的纹理和标识的边缘。曝光充足且均匀，色彩自然，准确还原了浅蓝色面料的质感。画面几乎没有噪点，分辨率足以支持高质量的线上展示，焦内成像锐利，焦外虚化柔和，体现了良好的摄影基础素质。",
+        "image_aesthetic_review": "在美学构图上，采用了对角线构图，使画面具有一定的动感。主体标识位于视觉中心附近，配合大光圈带来的虚化效果，使主体非常突出。色彩搭配和谐，浅蓝色与淡紫色的组合给人一种清爽、现代的感觉。然而，作为“公示信息”场景，其信息密度极低，缺乏必要的文字承载空间和结构化布局。",
+        "high_level_semantic_review": "该图片与给定的“政府机构-公示信息/公告栏”场景存在严重的语义偏差。图片内容完全属于商业产品展示或个人生活分享范畴，完全没有体现出政府机构的权威性、正式感，也无法承载任何公示公告所需的文本信息。",
+        "effectiveness_and_improvement": "该图片在指定场景下完全无效。虽然它是一张高质量的摄影作品，但由于内容与“公告栏”这一功能性场景完全不匹配，无法起到传递政务信息的作用。改进方向：应拍摄包含实际公告栏框架、政府徽标、正式公文或电子显示屏的画面。如果需要体现政府服务，应增加办公环境或工作人员等元素，而非单纯的衣物特写。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 4,
+          "resolution": 5
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 5,
+          "background_cleanliness": 4,
+          "visual_hierarchy": 4,
+          "color_harmony": 4,
+          "information_density": 1
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.04
+  },
+  {
+    "id": 2177,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "酒店",
+    "custom_category": "周边环境",
+    "bucket": "all",
+    "poiid": "B0J6Z4H7HB",
+    "image_url": "http://store.is.autonavi.com/showpic/738dbdebbaca7a21386b56868c48e927",
+    "aes_mean": 5.0978498458862305,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 4.1,
+      "aesthetic_review": {
+        "image_description": "该图片展示了田间生长中的两颗西瓜，画面以近景视角呈现。主体西瓜色泽翠绿，条纹清晰，表面挂有细微的泥土痕迹，展现了自然的生长状态。背景为郁郁葱葱的瓜藤与深褐色的土壤，通过浅景深效果进行了虚化处理，营造出浓厚的田园气息。",
+        "image_quality_review": "图像在基本质量属性上表现优异。清晰度极高，前景西瓜的表皮纹理、瓜蔓上的细小绒毛以及土壤的颗粒感都清晰可见。曝光控制精准，自然光线下明暗过渡柔和，没有出现过曝或死黑区域。色彩饱和度适中，真实还原了植物的翠绿与土地的深棕，无明显色偏。噪点控制良好，画面纯净度高，分辨率足以支撑线上高清展示。",
+        "image_aesthetic_review": "在美学构图上，采用了经典的对角线与三分法结合，将视觉重心放在右下方的西瓜上，同时利用左后方的西瓜增加画面深度。视觉层次感鲜明，通过大光圈带来的虚化效果，使主体从复杂的叶片背景中脱颖而出。色彩协调度高，绿色与棕色的自然配色方案给人以清新、健康的视觉感受。信息密度适中，精准捕捉了“采摘”或“农耕”的局部美感。",
+        "high_level_semantic_review": "从高层语义来看，图片成功传达了“自然、有机、原生态”的情绪。虽然作为酒店“周边环境”的展示略显局部，但对于主打农家乐、生态度假或采摘体验的酒店而言，其风格与场景适配度较高，能够有效吸引追求田园生活的受众。",
+        "effectiveness_and_improvement": "该图片在展示酒店生态特色方面非常有效，具备较强的视觉吸引力。不足之处在于，作为“周边环境”类目，画面过于聚焦局部，缺乏与酒店建筑或整体地理环境的关联性，导致用户难以判断该环境的具体规模。建议增加一张包含远景农田与酒店建筑的合影，或在构图上稍微拉远，引入更多环境元素，以增强场景的叙事完整性。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 5,
+          "background_cleanliness": 4,
+          "visual_hierarchy": 5,
+          "color_harmony": 5,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 3,
+          "core_information_expression": 3,
+          "style_emotion_fit": 4,
+          "effective_attraction": 3
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 19.469
+  },
+  {
+    "id": 14550,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "酒店",
+    "custom_category": "周边环境",
+    "bucket": "middle",
+    "poiid": "B0FFJI4IRN",
+    "image_url": "https://aos-comment.amap.com/B0FFJI4IRN/comment/04f1b9154c5acdf53e31c3756f5e44ff_2048_2048_80.jpg",
+    "aes_mean": 4.226215362548828,
+    "show_poi_visited_num": 1392,
+    "gpt_inference_result": {
+      "overall_score": 1.5,
+      "aesthetic_review": {
+        "image_description": "该图片是一张手机应用程序内的酒店订单详情页截图。画面顶部包含三个极小的景点缩略图（南浔古镇），主体部分则由大量的文字信息组成，包括房型名称、入住日期、入房说明、订单号以及联系方式等UI界面元素。",
+        "image_quality_review": "从纯粹的图像质量角度看，该截图清晰度极高，文字锐利，没有任何噪点、模糊或压缩损伤。色彩表现为标准的系统UI配色，曝光均匀，分辨率完全符合线上展示的标准。然而，这些技术指标仅体现了截图工具的性能，而非摄影质量，对于展示“周边环境”这一视觉需求没有实际贡献。",
+        "image_aesthetic_review": "图片完全不具备摄影美学属性。其构图为典型的移动端列表式布局，缺乏艺术性的视觉动线、空间层次或光影处理。虽然背景整洁（纯白UI背景），但这种整洁是功能性的，而非审美性的。画面信息密度极高且以文字为主，无法提供任何视觉上的愉悦感或美学意境。",
+        "high_level_semantic_review": "图片与给定的“酒店-周边环境”场景严重不匹配。它是一张包含个人隐私信息的订单凭证，而非展示酒店地理位置或周边景观的视觉素材，完全无法表达该场景下的核心语义信息。",
+        "effectiveness_and_improvement": "该图片在指定场景下完全无效，甚至可能因包含订单号等敏感信息而产生安全风险。它无法帮助用户了解酒店周边的实际情况，没有任何吸引力。改进方案是彻底更换图片，应拍摄并上传能够体现南浔古镇风貌、酒店外围景观或标志性建筑的高质量实景照片，并注重构图的平衡感与光影的氛围感。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 5
+        },
+        "mid_level_structure": {
+          "composition": 1,
+          "subject_prominence": 1,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 2,
+          "color_harmony": 3,
+          "information_density": 1
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 13.093
+  },
+  {
+    "id": 3269,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "房产",
+    "custom_category": "配套设施",
+    "bucket": "all",
+    "poiid": "B00140W74U",
+    "image_url": "https://aos-comment.amap.com/B00140W74U/comment/content_media_external_file_1000067932_ss__1767262826372_10126744.jpg",
+    "aes_mean": 4.850546836853027,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一份放置在金属托盘中的中式烧烤串，包括肉串和疑似面筋或豆制品的串类。食物下方垫着印有“舌尖上的烧烤”字样及啤酒、辣椒图案的防油纸，背景为深色的木质桌面，整体呈现出一种深夜食堂或大排档的餐饮氛围。",
+        "image_quality_review": "从基础质量来看，图片清晰度尚可，焦点集中在画面前方的肉串上，能够表现出食物表面的油脂感和调料细节。曝光较为充足，室内暖色调灯光符合餐饮场景。然而，由于采用了浅景深拍摄，画面后方的签子部分出现了明显的虚化，且边缘存在一定的运动模糊。分辨率足以支撑移动端展示，但缺乏高精度的细节刻画。",
+        "image_aesthetic_review": "在美学构图上，图片采用了对角线构图，但画面显得较为拥挤且杂乱。大量的竹签延伸至画外，导致视觉动线不够明确。背景的防油纸虽然带有品牌元素，但由于摆放随意且有油渍，降低了画面的整洁度。色彩上以暖黄和红褐色为主，虽然符合食物诱人的色调，但整体视觉层次感较弱，缺乏空间深度。",
+        "high_level_semantic_review": "该图片与“房产-配套设施”的场景存在严重的语义偏差。虽然餐饮属于生活配套，但仅凭一张食物特写无法体现“设施”的空间感、规模感或环境品质。用户无法通过此图获取关于房产周边配套的有效地理或环境信息，信息传达极度不准确。",
+        "effectiveness_and_improvement": "该图片在指定场景下基本无效。作为房产配套设施的展示，它过于微观，更像是一张个人生活随拍。改进建议：应拍摄餐饮设施的整体环境，如餐厅门头、内部装修或美食街的全景，将食物作为环境中的点缀而非唯一主体。若要强调生活气息，应采用更广的视角，将餐饮设施与社区环境或街道背景结合，以体现配套的便利性与真实感。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 3,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 2,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 3,
+          "color_harmony": 4,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 2,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 28.782
+  },
+  {
+    "id": 12415,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "房产",
+    "custom_category": "周边街景",
+    "bucket": "high",
+    "poiid": "B0017877LT",
+    "image_url": "https://aos-comment.amap.com/B0017877LT/comment/805bca09556af6e9577a82b1137910a4_2048_2048_80.jpg",
+    "aes_mean": 4.179765701293945,
+    "show_poi_visited_num": 36988,
+    "gpt_inference_result": {
+      "overall_score": 1.8,
+      "aesthetic_review": {
+        "image_description": "该图像并非摄影照片，而是一张移动端打车软件的系统功能截屏。画面上方显示了从起点到“英利国际金融中心”的地图路径规划，下方则详细列出了品质专车、特价拼车等多种车型的预估价格、优惠信息及呼叫按钮。",
+        "image_quality_review": "从纯数字图像质量角度评估，该截图表现优秀。由于是系统原生截屏，其清晰度极高，文字与图标边缘锐利，无任何物理拍摄中常见的噪点、运动模糊或对焦问题。色彩还原准确，亮度分布均匀，分辨率完全满足线上展示的规格要求，具备极高的数字化基础素质。",
+        "image_aesthetic_review": "作为UI界面，其设计符合现代移动应用的美学逻辑，色彩搭配和谐，视觉层次清晰。然而，若将其置于“房产周边街景”的评价体系下，该图完全缺乏摄影美学属性。画面中充斥着大量的UI控件、文字和图标，缺乏真实空间的构图、光影变化及环境氛围感，无法提供任何关于物理景观的审美体验。",
+        "high_level_semantic_review": "语义表达严重错位。用户要求的场景是“房产周边街景”，而图片内容属于“出行服务工具界面”。虽然地图上标注了地标名称，但并未展示任何实际的建筑外观、街道风貌或社区环境，完全无法传递房产周边的视觉信息。",
+        "effectiveness_and_improvement": "该图片在指定场景下属于无效素材，无法辅助用户判断房产周边的真实环境，甚至会因内容不符产生误导。改进方向：必须替换为实地拍摄的高清街景照片。建议采用广角镜头捕捉建筑与街道的关系，确保光影自然、色调明快，重点突出周边的生活配套设施和绿化环境，以满足房产类目下的信息展示需求。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 5
+        },
+        "mid_level_structure": {
+          "composition": 1,
+          "subject_prominence": 1,
+          "background_cleanliness": 4,
+          "visual_hierarchy": 4,
+          "color_harmony": 4,
+          "information_density": 3
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.993
+  },
+  {
+    "id": 10037,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "室内设施",
+    "custom_category": "其它",
+    "bucket": "high",
+    "poiid": "B0FFIPZ57R",
+    "image_url": "http://store.is.autonavi.com/showpic/51472554076241c15da7580621f4a8be",
+    "aes_mean": 5.925107955932617,
+    "show_poi_visited_num": 3366,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "这张图片采用高机位俯拍视角，展现了一个现代城市住宅或酒店的户外休闲平台。画面中心是一个对称的欧式喷泉水景，四周环绕着木质铺装地面，其上整齐摆放着多套户外餐饮桌椅。背景包含修剪整齐的草坪、茂密的绿植景观以及远处的城市高层建筑。",
+        "image_quality_review": "从纯技术角度看，图像质量极佳。画面清晰度极高，喷泉的水花纹理、木地板的缝隙以及远景建筑的细节都清晰可见。曝光控制精准，高光与阴影部分的细节保留完整，色彩饱和度自然，真实还原了植被的翠绿与木质的暖色调。图像无明显噪点或压缩损伤，分辨率足以支撑高质量线上展示。",
+        "image_aesthetic_review": "在美学构图上，图片采用了严谨的对称式布局，以喷泉为中心轴，营造出一种秩序感和平衡美。视觉层次分明，从前景的休闲区到中景的水景绿化，再到远景的城市天际线，空间感极强。色彩搭配和谐，自然景观的绿色与人造设施的深色调相互映衬。然而，由于其表现内容与“室内设施”这一类目完全背离，其构图所服务的对象并非指定主体。",
+        "high_level_semantic_review": "图片内容与给定的“室内设施”类目存在严重的属性冲突。画面展示的是典型的户外园林景观与露天休闲区，完全不包含任何室内环境元素。这种核心信息的错位导致其在当前类目下的场景适配度极低，无法满足用户寻找室内设施的视觉预期。",
+        "effectiveness_and_improvement": "尽管图片本身具有很高的视觉吸引力和摄影水平，但作为“室内设施”类目的素材，它是完全失效且具有误导性的。其最大的不足在于类目匹配错误。改进建议：应将此图片重新归类至“户外景观”、“露天餐厅”或“园林绿化”类目下。若需表达室内设施，应拍摄大堂、健身房、室内休息室等封闭空间内的硬件配套，以确保语义的一致性。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 3,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 3,
+          "color_harmony": 3,
+          "information_density": 3
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 51.198
+  },
+  {
+    "id": 10698,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "室内设施",
+    "custom_category": "其它",
+    "bucket": "middle",
+    "poiid": "B0FFGHICIG",
+    "image_url": "http://store.is.autonavi.com/showpic/86aa15bb90ee3819c5c2f60dc47acb71",
+    "aes_mean": 4.650398254394531,
+    "show_poi_visited_num": 667,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了名为“CASA HOTEL”的酒店建筑外观全景。拍摄时间处于傍晚的蓝调时刻，建筑物的暖黄色灯光与深蓝色的天空形成了鲜明的冷暖对比，前景是一个带有倒影的平静水池，周围点缀着绿植。",
+        "image_quality_review": "从基本质量来看，图片的曝光控制较为出色，建筑灯光没有出现严重的过曝，天空的色彩过渡也比较自然。然而，图片的物理分辨率较低，导致细节表现力不足，在建筑边缘和暗部区域可以观察到明显的压缩痕迹和噪点，清晰度尚有提升空间。",
+        "image_aesthetic_review": "在美学构图上，摄影师采用了对称式构图，利用水面形成的倒影增强了画面的视觉平衡感和纵深感。冷色调的背景与暖色调的主体建筑形成了经典的视觉对比，营造出一种高端、宁静且专业的酒店氛围，视觉层次感清晰。",
+        "high_level_semantic_review": "尽管图片本身具有较高的美学水准，但其内容与给定的“室内设施”类目严重不符。画面完全聚焦于建筑外部轮廓和景观，未能展示任何室内设施的信息，导致核心语义表达失效。",
+        "effectiveness_and_improvement": "该图片作为酒店外观宣传照非常合格，但作为“室内设施”类目的素材则完全不具备参考价值。建议更换为展示酒店大堂、客房内部、餐厅或健身房等具体室内场景的照片。若必须使用此图，应修正类目标签为“建筑外观”或“酒店全景”。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 3,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 3,
+          "resolution": 2
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 4,
+          "background_cleanliness": 4,
+          "visual_hierarchy": 4,
+          "color_harmony": 5,
+          "information_density": 3
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 4,
+          "effective_attraction": 2
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 16.963
+  },
+  {
+    "id": 89,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "生活服务",
+    "custom_category": "成果/效果展示",
+    "bucket": "all",
+    "poiid": "B0FFFGYKQS",
+    "image_url": "http://store.is.autonavi.com/showpic/e791bcce4dfeca382f214785e971ff4b",
+    "aes_mean": 5.95638895,
+    "show_poi_visited_num": 477,
+    "gpt_inference_result": {
+      "overall_score": 4.6,
+      "aesthetic_review": {
+        "image_description": "这张图片采用高空俯拍视角，展现了一对新人亲吻的浪漫瞬间。新娘洁白的婚纱与长裙摆在翠绿的草坪上艺术化地铺展开来，形似巨大的蝴蝶翅膀。画面中点缀着飘落的粉色花瓣，营造出一种梦幻、唯美且富有动感的视觉氛围。",
+        "image_quality_review": "图片在曝光和色彩表现上非常出色，光线明亮且均匀，色彩饱和度适中，生动地还原了草坪的翠绿与花瓣的娇嫩。然而，受限于上传的分辨率，图片存在一定的压缩痕迹和噪点，导致婚纱蕾丝和草坪纹理的细节清晰度有所下降。前景花瓣的虚化处理是艺术化的表现，增强了空间深度，但主体边缘的锐度仍有提升空间。",
+        "image_aesthetic_review": "构图极具创意，利用俯视角度将婚纱裙摆转化为极具张力的几何线条，形成了强烈的视觉引导力。色彩搭配和谐，白、绿、粉的经典组合传递出清新、高雅的美感。画面层次分明，通过前景飘落的花瓣、中景的主体人物以及背景的草坪，构建了丰富的空间感。主体位置突出，视觉中心明确，展现了极高的商业摄影美学水准。",
+        "high_level_semantic_review": "图片精准契合“生活服务-成果展示”场景，完美体现了婚庆摄影服务的专业水平与创意能力。它不仅展示了拍摄技术，更成功传达了幸福、浪漫的情绪价值，能够有效触达目标客户的审美偏好。",
+        "effectiveness_and_improvement": "该图片具备极强的视觉吸引力和说服力，能显著提升用户对摄影服务的信任感。不足之处在于图片右下角带有水印，且当前分辨率略低，影响了整体的高级感。建议在正式展示时使用无水印的高清原图，并对草坪接缝处进行更细腻的后期修饰，以强化画面的精致度与专业感。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 3.5,
+          "exposure": 4.5,
+          "saturation_color_accuracy": 4.5,
+          "noise_blur": 3.5,
+          "resolution": 3.0
+        },
+        "mid_level_structure": {
+          "composition": 5.0,
+          "subject_prominence": 5.0,
+          "background_cleanliness": 4.5,
+          "visual_hierarchy": 4.5,
+          "color_harmony": 5.0,
+          "information_density": 4.5
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 5.0,
+          "core_information_expression": 5.0,
+          "style_emotion_fit": 5.0,
+          "effective_attraction": 5.0
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 14.219
+  },
+  {
+    "id": 12376,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "生活服务",
+    "custom_category": "成果/效果展示",
+    "bucket": "middle",
+    "poiid": "B0FFGXOM6Z",
+    "image_url": "http://store.is.autonavi.com/showpic/018f1deee2e2c78c73401d6de04623ae",
+    "aes_mean": 4.049407720565796,
+    "show_poi_visited_num": 364,
+    "gpt_inference_result": {
+      "overall_score": 2.1,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一个生活服务类场所（疑似影楼或礼品店）的成果展示区。画面中心是一个深棕色的木质展示柜，柜格内陈列着多种规格的相框、相册和工艺摆件。左侧背景中露出了摄影灯架和杂物，前景则包含一张玻璃圆桌和一把明黄色的塑料凳子。",
+        "image_quality_review": "图片基本质量较差。最核心的问题在于严重的画面模糊，疑似拍摄时相机抖动或对焦失误，导致展示柜上的照片细节、文字及产品质感完全无法辨识。此外，图片分辨率较低，存在明显的噪点和压缩损伤。色彩表现偏灰暗且带有室内灯光的黄绿偏色，未能准确还原产品的真实色彩，整体观感不够通透。",
+        "image_aesthetic_review": "美学表现欠佳。构图上采用了略微倾斜的视角，但并未起到美化作用，反而显得画面局促且不稳定。背景处理非常杂乱，左侧的摄影器材、挂着的织物以及高饱和度的黄色凳子极大地干扰了视觉重心，导致主体不够突出。画面缺乏清晰的视觉层次感，光影平淡，未能通过明暗对比来引导用户的视线，整体显得杂乱无章。",
+        "high_level_semantic_review": "作为“成果展示”场景，该图片未能达成其核心目的。由于清晰度极低，用户无法通过图片判断该服务商的工艺水平和产品质量。杂乱的环境不仅没有体现出专业感，反而给人一种管理混乱的负面印象，难以建立用户信任或产生消费冲动。",
+        "effectiveness_and_improvement": "该图片目前不具备商业展示价值。主要改进方向：首先应确保拍摄时的稳定性，解决模糊问题，使产品细节清晰可见；其次应重新构图，移除画面左侧的灯架、凳子等无关杂物，保持背景整洁，使视觉焦点集中在展示柜上；最后建议优化光影，利用局部照明增加产品的立体感和高级感，提升整体的品牌形象。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 2,
+          "exposure": 3,
+          "saturation_color_accuracy": 3,
+          "noise_blur": 2,
+          "resolution": 2
+        },
+        "mid_level_structure": {
+          "composition": 2,
+          "subject_prominence": 2,
+          "background_cleanliness": 2,
+          "visual_hierarchy": 2,
+          "color_harmony": 3,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 2,
+          "core_information_expression": 2,
+          "style_emotion_fit": 2,
+          "effective_attraction": 2
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 16.34
+  },
+  {
+    "id": 11602,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "医疗",
+    "custom_category": "导视/信息标识",
+    "bucket": "high",
+    "poiid": "B0FFG03W2Q",
+    "image_url": "https://aos-comment.amap.com/B0FFG03W2Q/comment/consume/fd51b790e3a57a1396252665ceb52ddd_2048_2048_80.jpg",
+    "aes_mean": 4.283661365509033,
+    "show_poi_visited_num": 13199,
+    "gpt_inference_result": {
+      "overall_score": 4.7,
+      "aesthetic_review": {
+        "image_description": "该图片是一张手机端医保使用记录查询界面的截图。画面采用简洁的卡片式布局，清晰展示了在“上海同翔医院”的多条门诊消费记录，包含具体的就诊时间、总费用以及现金、基金、个账等详细的支付构成信息。",
+        "image_quality_review": "作为原生数字截图，图像质量极佳。文字边缘锐利，对比度高，确保了极佳的可读性。画面无任何噪点、压缩损伤或运动模糊。曝光均匀，色彩表现为标准的UI灰阶色调，准确反映了数字化界面的真实观感。分辨率完全满足线上展示需求，细节分明。",
+        "image_aesthetic_review": "美学设计遵循现代极简主义风格。通过圆角卡片区分不同记录，增加了界面的亲和力与条理性。构图严谨，留白充足，有效缓解了多项数据带来的视觉压力。视觉层次感分明，医院名称作为核心主体被加粗突出，引导用户视线自然下移至具体金额，体现了优秀的交互美学。",
+        "high_level_semantic_review": "图片高度契合医疗信息标识场景。其风格专业、严谨且透明，符合用户对医保、金融类数据的心理预期。信息传递直接高效，能够让用户在极短时间内获取核心报销数据，具备很强的实用功能属性。",
+        "effectiveness_and_improvement": "该图在信息传达上非常有效，核心数据一目了然。不足之处在于，作为“导视/信息标识”，视觉表现略显单一，若能针对不同支付状态或费用区间加入微小的色彩区分（如标签化处理），将进一步提升信息的检索效率和视觉吸引力。总体而言，是一张高质量的数字化信息展示范本。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 5
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 4,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 5,
+          "color_harmony": 5,
+          "information_density": 5
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 4,
+          "core_information_expression": 5,
+          "style_emotion_fit": 5,
+          "effective_attraction": 4
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.777
+  },
+  {
+    "id": 11924,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "医疗",
+    "custom_category": "服务场景",
+    "bucket": "high",
+    "poiid": "B000A7CGSS",
+    "image_url": "https://aos-comment.amap.com/B000A7CGSS/comment/consume/content_media_external_images_media_1403_1766618309059_69448516.jpg",
+    "aes_mean": 4.018046855926514,
+    "show_poi_visited_num": 1811065,
+    "gpt_inference_result": {
+      "overall_score": 4.5,
+      "aesthetic_review": {
+        "image_description": "该图片是一张高清晰度的手机移动端账单详情截图。画面展示了在北京大学第三医院进行的一笔60.00元的医疗消费记录，包含了交易状态、支付时间、付款方式及收款方全称等详细信息，整体呈现典型的互联网金融App UI界面风格。",
+        "image_quality_review": "作为原生数字截图，该图在基础质量维度表现近乎完美。文字边缘极其锐利，没有任何抗锯齿或压缩产生的杂色。色彩表现基于标准UI色域，白色背景纯净，橙色图标与黑色文字对比度极高，确保了极佳的可读性。分辨率完全满足线上展示需求，无任何噪点或运动模糊问题。",
+        "image_aesthetic_review": "图片遵循了现代移动端UI的极简主义美学。构图采用严谨的中心对称与垂直流向，视觉重心通过大字号金额和醒目的图标得以瞬间锁定。画面留白合理，利用卡片式布局划分信息区块，视觉层次感分明。配色方案和谐，以中性色为主，局部点缀品牌色，体现了医疗与金融场景应有的专业感与严谨感。",
+        "high_level_semantic_review": "图片精准契合“医疗-服务场景”的类目要求。它从数字化服务的视角，清晰地表达了医疗消费后的反馈环节。虽然并非实景拍摄，但作为服务流程中的重要一环，其传递的透明、高效、规范的语义非常明确，符合用户对现代医疗服务的心理预期。",
+        "effectiveness_and_improvement": "该图片在功能性表达上非常成功，能够极好地辅助用户理解医疗缴费服务。不足之处在于其作为纯工具类截图，视觉吸引力相对单一，缺乏情感温度。若用于宣传场景，建议将其置入智能手机样机（Mockup）中，或配合真实的医院背景进行合成，以增强场景的代入感和立体感。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 5
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 5,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 5,
+          "color_harmony": 4,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 4,
+          "core_information_expression": 5,
+          "style_emotion_fit": 4,
+          "effective_attraction": 3
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 17.41
+  },
+  {
+    "id": 10939,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "地名",
+    "custom_category": "人文活动/使用场景",
+    "bucket": "low",
+    "poiid": "B0FFFPREU9",
+    "image_url": "https://aos-comment.amap.com/B0FFFPREU9/comment/6eb694f551d6c091c038a26f1009fac4_2048_2048_80.jpg",
+    "aes_mean": 4.731319904327393,
+    "show_poi_visited_num": 3,
+    "gpt_inference_result": {
+      "overall_score": 4.1,
+      "aesthetic_review": {
+        "image_description": "画面以第一人称视角捕捉了用餐瞬间，一只手捏着一片涂抹了鲜绿色罗勒酱和两颗油渍番茄（红、黄各一）的粗粮面包。背景中隐约可见木质餐盘、盛放佐料的玻璃器皿及餐叉，整体呈现出温馨且精致的西式简餐氛围。",
+        "image_quality_review": "图片基本质量良好，主体食材的纹理清晰，番茄表面的油光质感得到了生动呈现。色彩饱和度较高，红、黄、绿三色的强烈对比极大地提升了食物的视觉诱惑力。曝光略微偏高，导致盘子边缘和番茄高光处有轻微的细节溢出。在暗部区域及背景虚化处存在少量数字噪点，但并不影响整体的线上展示效果。",
+        "image_aesthetic_review": "构图采用了流行的社交媒体“探店风格”，通过手持动作增强了画面的临场感与互动性。主体位置突出，利用浅景深效果成功构建了视觉层次，使背景的餐具和佐料成为有效的氛围烘托。色彩搭配和谐，暖色的木质基调与冷色的青酱形成互补。不足之处在于左下角的手指占比略大，且指甲部分的视觉存在感稍强，略微干扰了对食物主体的聚焦。",
+        "high_level_semantic_review": "图片精准契合“人文活动/使用场景”的定义，生动展示了品尝美食的生活片段。虽然缺乏具体地名标识，但其传达出的精致、健康的生活方式情绪，非常符合用户对高品质餐饮场景的心理预期。",
+        "effectiveness_and_improvement": "该图片在激发用户食欲和产生情感共鸣方面非常有效，具备很强的社交传播价值，适合作为餐厅评价或旅游生活攻略的配图。提升方向：建议在拍摄时适当缩小手指的画面占比，或通过后期微调降低高光亮度，以保留更多食材细节；同时可进行轻微降噪处理，提升画面的纯净度与高级感。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 3,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 3,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 5,
+          "background_cleanliness": 4,
+          "visual_hierarchy": 4,
+          "color_harmony": 5,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 5,
+          "core_information_expression": 4,
+          "style_emotion_fit": 4,
+          "effective_attraction": 4
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 17.054
+  },
+  {
+    "id": 5881,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "地名",
+    "custom_category": "导览/信息设施",
+    "bucket": "all",
+    "poiid": "B0FFF94TJN",
+    "image_url": "http://store.is.autonavi.com/showpic/0f9043ce268d9e6dfbaddddc450fdc49",
+    "aes_mean": 4.634113073348999,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "该图片采用大幅度仰拍视角，展示了一栋住宅楼的局部外墙。画面上方可见蓝色的“4”号楼牌，右下方张贴着《小区文明公约》和一张社区导览地图。墙面由土黄色涂料与灰色仿砖石材构成，背景包含部分窗户护栏和电线。",
+        "image_quality_review": "图像在曝光和色彩准确性方面表现正常，自然光线下色彩还原真实。然而，清晰度在核心信息区域表现极差，由于拍摄距离和角度问题，导览图上的文字和地理信息完全模糊，无法辨识。分辨率虽足以看清建筑轮廓，但不足以支撑对导览设施细节的展示，存在明显的透视畸变。",
+        "image_aesthetic_review": "构图极不平衡，极端的仰拍角度导致建筑线条严重倾斜，产生了强烈的视觉压迫感。作为场景主体的导览设施被边缘化，位于画面右下角且占比过小，视觉重心被大面积单调的墙面和窗户分散。画面缺乏层次感，背景中的电线和防盗窗对整体美感产生了干扰。",
+        "high_level_semantic_review": "图片虽然涵盖了地名标识和导览设施，但完全背离了导览场景的功能性需求。核心信息表达失效，用户无法通过该图片获取任何有效的地理指引或规章信息，场景适配度较差。",
+        "effectiveness_and_improvement": "该图片在导览/信息设施场景下几乎没有实用价值。由于关键的地图内容不可读，它无法起到辅助判断或指引的作用。改进建议：应采用平视或微仰视角近距离拍摄导览牌，确保文字和地图线条清晰锐利；构图上应将导览设施置于视觉中心，减少无关建筑背景的占比，以提升信息的传达效率。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 2,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 3,
+          "resolution": 3
+        },
+        "mid_level_structure": {
+          "composition": 2,
+          "subject_prominence": 2,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 2,
+          "color_harmony": 4,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 2,
+          "core_information_expression": 1,
+          "style_emotion_fit": 3,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.653
+  },
+  {
+    "id": 10308,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "景点",
+    "custom_category": "核心景观",
+    "bucket": "middle",
+    "poiid": "B073C0XJ9H",
+    "image_url": "https://aos-comment.amap.com/B073C0XJ9H/comment/6405AB41_69F7_468D_BED0_9C4CF6162AF2_L0_001_2000_133_1761537665225_99350941.jpg",
+    "aes_mean": 5.791825056,
+    "show_poi_visited_num": 1290,
+    "gpt_inference_result": {
+      "overall_score": 3.0,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一座色彩斑斓的童话风格城堡，其构图模仿了香港迪士尼乐园的“奇妙梦想城堡”。城堡位于画面中央，两侧由欧式风格的街道建筑和翠绿的树木环绕，背景是连绵的青山和晴朗的蓝天白云，整体色调明亮且富有梦幻感。",
+        "image_quality_review": "从基础质量来看，图片在清晰度、曝光和色彩饱和度上表现良好，画面明亮且无明显噪点。然而，作为一张标注为“AI生成”的图片，其在细节处存在明显的AI伪影。例如，左侧招牌上的文字为无法辨认的乱码，城堡的部分建筑线条和尖顶连接处存在逻辑错误，这种细节上的失真严重影响了图片的真实感和专业度。",
+        "image_aesthetic_review": "在美学构图上，图片采用了经典的对称式中心构图，利用两侧建筑形成了良好的视觉引导线，将观众视线集中在核心主体城堡上。色彩搭配和谐，蓝、绿、粉、金的组合营造了强烈的度假氛围。视觉层次感清晰，前景街道、中景城堡与远景山脉形成了合理的空间深度，但由于AI生成的局限性，部分纹理显得过于平滑，缺乏真实材质的质感。",
+        "high_level_semantic_review": "在高层语义层面，虽然图片符合“景点-核心景观”的场景设定，但由于其并非实景拍摄，且存在明显的建筑细节错误和文字乱码，对于追求真实旅游信息的决策用户来说，其参考价值较低，甚至可能产生误导，缺乏作为核心景观图应有的权威性和准确性。",
+        "effectiveness_and_improvement": "该图片视觉冲击力较强，适合作为氛围渲染图使用，但作为“景点核心景观”则存在严重不足。主要问题在于AI生成的虚假细节（如乱码文字和不合理的建筑结构）降低了图片的可信度。提升方向：建议替换为高分辨率的实景拍摄照片，确保建筑细节准确无误，并清除画面中干扰视觉的乱码元素，以增强图片的真实吸引力和信息传递的有效性。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 5,
+          "background_cleanliness": 4,
+          "visual_hierarchy": 4,
+          "color_harmony": 4,
+          "information_density": 2
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 3,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 26.639
+  },
+  {
+    "id": 15252,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "景点",
+    "custom_category": "导览信息",
+    "bucket": "high",
+    "poiid": "B033E0O4VJ",
+    "image_url": "https://aos-comment.amap.com/B033E0O4VJ/comment/consume/64f030cd2ab78a4bb2175814ef43740a_2048_2048_80.jpg",
+    "aes_mean": 4.304409742355347,
+    "show_poi_visited_num": 57155,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "该图片是一张移动端APP的订单详情页截图。画面顶部显示“订单详情”，主体内容为“酒城乐园陆地乐园”的成人夜场票订单信息，状态标注为“已使用”，价格为62元。页面还包含退改规则、供应商联系方式、常见问题列表以及底部的评价和发票功能按钮。",
+        "image_quality_review": "从纯技术角度评估，该图像质量极高。作为系统原生截图，其清晰度达到了像素级精准，文字边缘锐利，没有任何压缩伪影、噪点或运动模糊。色彩还原准确，完全符合移动端UI设计的标准色域。曝光均匀，高光与阴影处理得当，分辨率足以支撑任何线上展示需求，展现了数字图像的稳定性。",
+        "image_aesthetic_review": "在美学结构上，该图遵循了成熟的UI设计规范。构图采用垂直流式布局，利用圆角卡片和投影效果营造出良好的视觉层次感。背景纯净，信息区块划分明确，视觉动线引导用户从订单状态流向操作按钮。色彩搭配以中性灰白为主，点缀品牌色，整体风格专业、整洁且具有高度的可读性。",
+        "high_level_semantic_review": "在高层语义层面，该图片与预设的“景点-导览信息”场景存在严重偏差。它本质上是一张个人交易凭证，而非面向大众的导览工具。它缺乏景点的空间描述、路线指引或景观呈现，无法履行导览场景的功能职责。",
+        "effectiveness_and_improvement": "该图片作为订单管理工具是有效的，但作为“导览信息”则完全不合格，属于类目场景错配。它无法吸引用户对景点的兴趣，也无法辅助用户进行游玩决策。改进方向：应替换为景点的实景摄影图、手绘导览地图或包含具体游玩攻略的视觉海报。若必须保留文字信息，应侧重于开放时间、入园须知等公共导览内容，而非私人订单记录。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 5
+        },
+        "mid_level_structure": {
+          "composition": 2,
+          "subject_prominence": 1,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 4,
+          "color_harmony": 4,
+          "information_density": 3
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 1,
+          "effective_attraction": 1
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 23.38
+  },
+  {
+    "id": 7137,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "购物",
+    "custom_category": "街景/周边",
+    "bucket": "all",
+    "poiid": "B023E07FDR",
+    "image_url": "https://aos-comment.amap.com/B023E07FDR/comment/content_media_external_images_media_6233_1730073852744_90871686.jpg",
+    "aes_mean": 4.486738443374634,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 4.5,
+      "aesthetic_review": {
+        "image_description": "该图片是一张高德地图的截图，展示了“万达广场（宁波江北店）”及其周边地理信息。画面中心以紫色购物图标标注商场核心位置，并用蓝色虚线框选出商场建筑范围，周边清晰标注了宝庆路、江北大街等主要道路及多个出入口、停车场和加油站信息。",
+        "image_quality_review": "图像质量极高，属于标准的数字化UI渲染输出。文字边缘锐利，图标矢量感强，没有任何噪点或运动模糊。色彩还原准确，符合地图导航类产品的视觉规范。分辨率足以支撑线上展示，信息读取毫无障碍。曝光均匀，高亮背景与深色文字之间对比度适中，确保了极佳的可读性，体现了专业地图工具的严谨性。",
+        "image_aesthetic_review": "从地图美学角度看，构图均衡，主体万达广场处于视觉中心，引导性极强。色彩搭配采用了经典的地图配色方案：淡蓝色的水系、浅绿色的绿地与白色的道路形成和谐背景，紫色与蓝色的功能图标在画面中跳脱而出，形成了良好的视觉层次感。信息密度虽然较高，但通过合理的字号分级和图标分类，使得画面杂而不乱，视觉动线清晰。",
+        "high_level_semantic_review": "图片与“购物-街景/周边”场景高度适配。它不仅明确了商场的地理位置，还提供了极其丰富的周边配套信息（如停车场、加油站、出入口），对于计划前往该地购物的用户具有极高的实用参考价值，功能语义表达非常完整。",
+        "effectiveness_and_improvement": "该图在辅助决策和地理引导方面表现优秀，能有效帮助用户了解商场规模及交通便利性。不足之处在于，作为一张地图截图，它缺乏真实街景的视觉感染力和空间氛围感，无法直观展示商场的外观美感。建议在实际应用中，将此类地图信息与真实的建筑外景实拍图结合使用，以兼顾功能性与视觉吸引力。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 5,
+          "background_cleanliness": 4,
+          "visual_hierarchy": 5,
+          "color_harmony": 5,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 5,
+          "core_information_expression": 5,
+          "style_emotion_fit": 4,
+          "effective_attraction": 3
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 26.362
+  },
+  {
+    "id": 9684,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "购物",
+    "custom_category": "促销信息",
+    "bucket": "all",
+    "poiid": "B0IKGHAY7D",
+    "image_url": "https://aos-comment.amap.com/B0IKGHAY7D/comment/content_media_external_images_media_100007710_1738878982015_10859112.jpg",
+    "aes_mean": 3.7328805923461914,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 3.0,
+      "aesthetic_review": {
+        "image_description": "该图片是一张社交软件聊天界面的截图。画面显示了绿色的对话气泡，内容涉及用户分享的一次修车经历，强调仅花费十元且未被“坑”，表达了对商家的信任和感激。头像和表情符号呈现出明显的模糊感。",
+        "image_quality_review": "图像的基本质量存在明显缺陷。虽然文字部分清晰可读，但非文字元素（如用户头像和中间的大表情符号）存在严重的失焦和像素化现象，这可能是由于多次转发压缩或原始分辨率不足导致的。曝光和色彩表现符合常规手机截图标准，没有明显的色偏，但整体画质的粗糙感显著降低了图片的专业度，不符合高质量视觉素材的标准。",
+        "image_aesthetic_review": "在美学层面，该图属于纯功能性的纪实截图，缺乏艺术设计感。构图遵循社交软件的默认布局，视觉动线清晰，主体文字突出。然而，背景虽然整洁，但由于头像和表情的模糊，导致画面整体显得不够精致，缺乏视觉吸引力。色彩上仅维持了软件原生的绿白配色，层次感单一，无法在视觉上产生美感或品牌联想。",
+        "high_level_semantic_review": "从语义上看，图片准确传达了“物美价廉”和“诚信经营”的促销核心信息，具有较强的真实感和口碑传播潜力。它符合购物类目下的用户评价场景，能引起消费者的情感共鸣，但低劣的画质在一定程度上削弱了信息的权威性和可信度。",
+        "effectiveness_and_improvement": "该图片作为促销信息，其有效性体现在“真实感”带来的信任背书，适合在私域流量或社交媒体草根营销中使用。不足之处在于画质低劣，给人以廉价、非正式的印象。提升方向建议：使用高分辨率的原始截图以确保所有元素清晰；或者将聊天内容提取出来，重新设计成带有品牌视觉元素的精美海报，在保留真实对话感的同时提升整体美学档次。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 2,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 2,
+          "resolution": 2
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 4,
+          "background_cleanliness": 4,
+          "visual_hierarchy": 4,
+          "color_harmony": 4,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 3,
+          "core_information_expression": 4,
+          "style_emotion_fit": 2,
+          "effective_attraction": 2
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.677
+  },
+  {
+    "id": 5924,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "运动健身",
+    "custom_category": "人物活动",
+    "bucket": "all",
+    "poiid": "B0IGMC83OZ",
+    "image_url": "https://aos-comment.amap.com/B0IGMC83OZ/comment/content_media_external_images_media_82194_ss__1733638999376_66651266.jpg",
+    "aes_mean": 4.840242624282837,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 1.5,
+      "aesthetic_review": {
+        "image_description": "画面前景为一支斜向放置的紫色发光应援棒，上面印有“毛不易”及“冒险精神”字样。背景是极度模糊的演唱会舞台现场，隐约可见一名歌手在发光的屏幕前表演，整体色调以深紫色和明亮的舞台白光为主。",
+        "image_quality_review": "图片质量较差。清晰度方面，仅前景文字勉强可辨，背景主体完全失焦。曝光控制不佳，舞台中心区域严重过曝，导致人物细节完全丢失，而暗部则伴有明显的数字噪点。色彩饱和度过高，紫色的荧光效果产生了严重的色溢现象，缺乏自然的色彩过渡。分辨率较低，画面充满压缩痕迹，无法满足高质量线上展示的需求。",
+        "image_aesthetic_review": "美学表现欠佳。构图上，巨大的应援棒以生硬的斜角切入画面，遮挡了过多的视觉空间，导致画面严重失衡。视觉层次虽然存在前后景深，但由于背景模糊过度且光斑杂乱，未能形成优美的虚化效果，反而显得画面凌乱。色彩搭配单一且刺眼，高饱和的紫色与背景强光缺乏协调感，整体视觉动线不清晰，缺乏艺术美感。",
+        "high_level_semantic_review": "高层语义完全偏离。图片内容明确指向演艺娱乐或粉丝追星场景，与要求的“运动健身”类目及“人物活动”场景毫无关联。它无法传递任何关于健康、锻炼或体育竞技的信息，语义匹配度极低。",
+        "effectiveness_and_improvement": "该图片在指定类目下完全无效。它不仅无法吸引运动健身用户，还会造成严重的视觉误导。主要不足在于类目完全错位、画质低劣及构图随意。提升方向：若要符合运动健身场景，应拍摄清晰的运动器材、健身房环境或正在进行体育锻炼的人物，并确保光线自然、主体突出、画质清晰，体现出积极向上的运动氛围。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 1.5,
+          "exposure": 2.0,
+          "saturation_color_accuracy": 2.0,
+          "noise_blur": 1.5,
+          "resolution": 2.0
+        },
+        "mid_level_structure": {
+          "composition": 2.0,
+          "subject_prominence": 1.5,
+          "background_cleanliness": 2.0,
+          "visual_hierarchy": 2.0,
+          "color_harmony": 2.0,
+          "information_density": 1.5
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1.0,
+          "core_information_expression": 1.0,
+          "style_emotion_fit": 1.0,
+          "effective_attraction": 1.0
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.354
+  },
+  {
+    "id": 6344,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "运动健身",
+    "custom_category": "场地/周边环境",
+    "bucket": "all",
+    "poiid": "B0IA16S8YY",
+    "image_url": "https://aos-comment.amap.com/B0IA16S8YY/comment/66bcbfef3b5965d40aa9f0d78c8636c1_2048_2048_80.jpg",
+    "aes_mean": 4.789859294891357,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 4.1,
+      "aesthetic_review": {
+        "image_description": "这张图片展示了一个标准的室外塑胶跑道场景。画面采用广角镜头拍摄，红色的跑道从左下角向右上方呈弧线延伸，具有强烈的视觉引导力。跑道右侧是绿色的草坪，左侧则是整齐的绿化树木与现代建筑。天空晴朗，蓝天白云交织，整体氛围阳光且充满活力。",
+        "image_quality_review": "图像基本质量良好，曝光充足且均匀，没有明显的过曝或暗部细节缺失。色彩饱和度较高，红色的跑道与绿色的草坪形成了鲜明的对比，视觉冲击力强。清晰度方面，主体跑道纹理可见，但在画面边缘和远景处存在一定的解析度下降和轻微的镜头畸变。图片中段树木处隐约可见水印残留，左下角草坪边缘有明显的后期修补痕迹，略微影响了画面的纯净度。",
+        "image_aesthetic_review": "在美学构图上，利用跑道的曲线作为引导线，成功营造了空间的延伸感和动态美。广角透视增加了画面的开阔感，符合运动场地的宏大叙事。视觉层次分明，前调的红色跑道、中调的绿植建筑与远调的蓝天形成了良好的色彩与空间过渡。然而，背景中的建筑略显杂乱，且画面中心区域存在的水印干扰了视觉的整体美感，降低了图片的专业质感。",
+        "high_level_semantic_review": "图片高度契合“运动健身-场地”的类目要求，准确传达了户外运动场地的核心信息。阳光明媚的气候与整洁的场地设施共同营造出积极、健康的运动氛围，能够有效激发用户的运动欲望，具有较强的场景代入感。",
+        "effectiveness_and_improvement": "该图片在展示运动场地环境方面非常有效，构图大气，色彩诱人。不足之处在于后期处理不够精细，画面中存在的水印和左下角的修补痕迹是明显的扣分项。建议通过后期修图去除水印并平滑处理左下角的色块，同时可以适当提升远景的锐度，以增强整张图片的专业度和商业价值。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 4,
+          "subject_prominence": 5,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 4,
+          "color_harmony": 4,
+          "information_density": 4
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 5,
+          "core_information_expression": 5,
+          "style_emotion_fit": 4,
+          "effective_attraction": 3
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 29.94
+  },
+  {
+    "id": 8465,
+    "plan_type": "quantity_scene_aes_10000",
+    "top_tag": "交通出行",
+    "custom_category": "服务设施",
+    "bucket": "all",
+    "poiid": "B0I6AC4EIJ",
+    "image_url": "https://store.is.autonavi.com/showpic/e223b3dd35c82d06f43e4354a403cba1",
+    "aes_mean": 4.178809166,
+    "show_poi_visited_num": 0,
+    "gpt_inference_result": {
+      "overall_score": 4.9,
+      "aesthetic_review": {
+        "image_description": "该图片是一个极简主义风格的加油站图标，主体为一个加油机剪影，包含机身、显示屏及加油枪细节。图标被包裹在一个正圆形的边框内，采用深蓝色调与浅灰色背景形成高对比度，整体设计符合国际通用标识规范。",
+        "image_quality_review": "图像质量极佳，作为矢量风格的图形，其边缘清晰锐利，没有任何杂色或噪点干扰。曝光完全均匀，深色主体与浅色背景的对比度极高，确保了极佳的辨识度。虽然在极高倍率下边缘略有像素化痕迹，但对于线上展示和UI界面使用而言，其分辨率和清晰度已完全达标。",
+        "image_aesthetic_review": "美学表现上遵循了功能主义设计原则。构图极其稳重，主体在圆形框架内居中对齐，视觉重心平衡。线条粗细均匀，负空间（如加油枪与机身间的缝隙）处理得当，避免了视觉上的拥挤感。色彩搭配简洁专业，深色调赋予了标识一种可靠、稳重的工业感，视觉层次分明。",
+        "high_level_semantic_review": "该图片与“交通出行-服务设施”场景高度契合。它准确地传达了“加油站”这一核心语义，没有任何歧义。其通用的符号化语言符合用户的认知预期，能够引导用户快速识别交通服务功能，具有极高的实用价值。",
+        "effectiveness_and_improvement": "该图片在功能性场景下表现卓越，具备极强的引导能力和信息传递效率。它能有效吸引用户注意力并辅助快速判断。若要进一步提升，可以提供更高分辨率的矢量版本以消除边缘微小的锯齿感，或者根据具体应用场景调整色彩饱和度以适配不同的UI主题。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 5,
+          "exposure": 5,
+          "saturation_color_accuracy": 5,
+          "noise_blur": 5,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 5,
+          "subject_prominence": 5,
+          "background_cleanliness": 5,
+          "visual_hierarchy": 5,
+          "color_harmony": 5,
+          "information_density": 5
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 5,
+          "core_information_expression": 5,
+          "style_emotion_fit": 5,
+          "effective_attraction": 5
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 119.743
+  },
+  {
+    "id": 10107,
+    "plan_type": "heat_aware_10000",
+    "top_tag": "交通出行",
+    "custom_category": "服务设施",
+    "bucket": "middle",
+    "poiid": "B0FFKRFKPC",
+    "image_url": "https://aos-comment.amap.com/B0FFKRFKPC/comment/content_media_external_file_1000022708_ss__1758008218516_57838878.jpg",
+    "aes_mean": 5.482716798782349,
+    "show_poi_visited_num": 861,
+    "gpt_inference_result": {
+      "overall_score": 2.5,
+      "aesthetic_review": {
+        "image_description": "画面中心是一碗中式甜品（疑似冰粉），盛放在白色瓷碗中，配有一把白瓷勺。甜品表面点缀着一颗翠绿的薄荷叶、红褐色的葡萄干和透明的圆子。背景为带有细微划痕的灰色金属质感桌面，光线从侧上方照射，形成柔和的阴影。",
+        "image_quality_review": "图片在基础质量方面表现良好。清晰度较高，薄荷叶的叶脉和葡萄干的质感清晰可见。曝光控制得当，虽然金属桌面和碗缘有少量高光反射，但未造成细节丢失。色彩还原自然，暖色调的食物与冷色调的背景形成了鲜明的对比。噪点控制优秀，画面纯净度高，分辨率足以支持线上展示，无明显的压缩损伤或运动模糊。",
+        "image_aesthetic_review": "构图采用斜向俯视角度，主体碗部位于画面中心偏左，视觉重心明确。薄荷叶作为视觉锚点，成功吸引了观察者的注意力。色彩上，绿色的薄荷叶与红褐色的配料形成了补色对比，增强了食欲感。然而，背景的金属桌面存在较多划痕，略显陈旧且质感一般，降低了画面的整体精致感。视觉层次感尚可，但背景缺乏环境交代，显得较为单调。",
+        "high_level_semantic_review": "图片与给定的“交通出行-服务设施”场景严重不匹配。画面中缺乏任何能够体现交通属性的元素（如车站背景、标识、票据等）。作为服务设施的展示，它仅表达了“食物”这一极小维度的信息，完全无法让用户联想到交通出行相关的服务体验。",
+        "effectiveness_and_improvement": "该图片作为美食摄影是合格的，但作为交通出行场景下的服务设施展示则完全失效，无法辅助用户判断设施的性质或环境。改进建议：若要适配该场景，应扩大取景范围，将餐厅的环境背景、带有交通枢纽特征的装饰或服务标识纳入画面，或者在构图时加入登机牌、车票等暗示性元素，以增强场景关联度与信息表达的准确性。"
+      },
+      "attribute_scores": {
+        "low_level_quality": {
+          "clarity": 4,
+          "exposure": 4,
+          "saturation_color_accuracy": 4,
+          "noise_blur": 4,
+          "resolution": 4
+        },
+        "mid_level_structure": {
+          "composition": 3,
+          "subject_prominence": 5,
+          "background_cleanliness": 3,
+          "visual_hierarchy": 4,
+          "color_harmony": 4,
+          "information_density": 3
+        },
+        "high_level_semantics_preference": {
+          "scene_fit": 1,
+          "core_information_expression": 1,
+          "style_emotion_fit": 2,
+          "effective_attraction": 2
+        }
+      }
+    },
+    "gpt_error": null,
+    "gpt_elapsed_seconds": 15.393
+  }
+]
+
+    const scoreText = { 1: '很差', 2: '较差', 3: '一般', 4: '良好', 5: '优秀' };
+    const samples = normalizeSamples(SAMPLES).slice(0, 30);
+    const userId = getUserId();
+    const storageKey = `aesthetic_survey_answers_${surveyId()}`;
+    let pageIndex = 0;
+    let answers = loadAnswers();
+    let submitting = false;
+
+    const pageRoot = document.getElementById('pageRoot');
+    const progressLabel = document.getElementById('progressLabel');
+    const answeredLabel = document.getElementById('answeredLabel');
+    const progressBar = document.getElementById('progressBar');
+    const statAnswered = document.getElementById('statAnswered');
+    const statAvg = document.getElementById('statAvg');
+    const statsBody = document.getElementById('statsBody');
+
+    render();
+
+    function normalizeSamples(data) {
+      if (!Array.isArray(data)) return [];
+      return data
+        .filter(item => item && item.image_url)
+        .map((item, idx) => ({
+          sample_key: item.sample_key || `${item.keyword || 'sample'}|${item.id || idx + 1}`,
+          keyword: item.keyword || '',
+          id: item.id || String(idx + 1),
+          top_tag: item.top_tag || '未提供类目',
+          custom_category: item.custom_category || item.custom_categary || '未提供场景',
+          poiid: item.poiid || '',
+          image_url: item.image_url,
+          plan_type: item.plan_type || '',
+          bucket: item.bucket || ''
+        }));
+    }
+
+    function render() {
+      updateHeader();
+      updateStatsPanel();
+
+      if (pageIndex === 0) renderIntro();
+      else if (pageIndex > samples.length) renderCompletion();
+      else renderImagePage(samples[pageIndex - 1], pageIndex);
+    }
+
+    function renderIntro() {
+      pageRoot.innerHTML = `
+        <h1>图像美学质量评分说明</h1>
+        <p class="lead">
+          请基于给定的<strong>类目</strong>和<strong>场景</strong>，对图片进行美学质量评分。
+          评分时不要重新判断图片类目或场景，而是直接在给定类目/场景下，
+          判断图片是否清晰、美观、准确、有吸引力，并是否适合该场景使用。
+        </p>
+
+        <div class="info-box">
+          <b>输入信息</b><br />
+          类目：每张图片的 <code>top_tag</code><br />
+          场景：每张图片的 <code>custom_category</code>
+        </div>
+
+        ${samples.length ? '' : `
+          <div class="info-box">
+            <span class="warn">当前没有有效图片数据。</span><br />
+            请在 HTML 里的 <code>const SAMPLES = [...]</code> 粘贴你的 30 条 JSON 数据。
+          </div>
+        `}
+
+        ${isApiUrlConfigured() ? '' : `
+          <div class="info-box">
+            <span class="warn">尚未配置阿里云提交接口 URL。</span><br />
+            请把 <code>SUBMIT_API_URL</code> 改成你的函数计算 HTTP 触发器 URL，否则无法提交到 OSS。
+          </div>
+        `}
+
+        <h2>评分范围：1-5 分</h2>
+        <div class="score-scale">
+          <div class="scale-item"><b>1 分</b>很差，严重影响使用</div>
+          <div class="scale-item"><b>2 分</b>较差，存在明显问题</div>
+          <div class="scale-item"><b>3 分</b>一般，基本可用但优势不明显</div>
+          <div class="scale-item"><b>4 分</b>良好，质量较高</div>
+          <div class="scale-item"><b>5 分</b>优秀，表现突出</div>
+        </div>
+
+        <h2>1. 图像基本质量属性</h2>
+        <h3>1.1 清晰度</h3><p>评估主体和关键细节是否清楚可辨。</p>
+        <h3>1.2 曝光</h3><p>评估画面亮度是否合适，是否存在过曝、欠曝或主体不可见的问题。</p>
+        <h3>1.3 饱和度 / 色彩准确性</h3><p>评估色彩是否自然准确，饱和度是否适当，是否存在明显色偏、过度饱和、灰暗或颜色失真等问题。</p>
+        <h3>1.4 噪声 / 模糊</h3><p>评估图片是否存在明显噪点、失焦、运动模糊或压缩损伤。</p>
+        <h3>1.5 分辨率</h3><p>评估图片尺寸、细节量和展示规格是否足够支撑线上展示。</p>
+
+        <h2>2. 图像美学基础属性</h2>
+        <h3>2.1 构图</h3><p>评估主体位置、裁切、留白、画面平衡和视觉动线是否合理。</p>
+        <h3>2.2 主体突出</h3><p>评估用户是否能第一时间看到给定类目/场景下的关键主体。</p>
+        <h3>2.3 背景整洁度</h3><p>评估背景是否干净、有序，是否会干扰主体表达。</p>
+        <h3>2.4 视觉层次感</h3><p>评估画面是否有清晰的主次关系、空间层次、明暗层次和前后关系。</p>
+        <h3>2.5 色彩协调度</h3><p>评估整体配色是否和谐，主色、辅助色和环境色是否协调。</p>
+        <h3>2.6 信息密度</h3><p>评估画面信息量是否适中，是否过于杂乱或过于空洞，用户是否能快速理解重点。</p>
+
+        <h2>3. 高层语义与偏好属性</h2>
+        <h3>3.1 场景适配度</h3><p>评估图片是否符合用户给定的类目和场景，是否满足该场景下的视觉需求。</p>
+        <h3>3.2 核心信息表达</h3><p>评估图片是否清楚表达该类目/场景下最重要的信息。</p>
+        <h3>3.3 风格与情绪适配度</h3><p>评估图片的风格、氛围、光影和情绪是否符合给定类目/场景的用户预期。</p>
+        <h3>3.4 有效吸引力</h3><p>评估图片在指定类目/场景下，是否具备让用户停留、产生兴趣、形成记忆、辅助判断或促进行动的能力。</p>
+
+        <div class="actions">
+          <button disabled>上一页</button>
+          <button class="primary" id="startBtn" ${samples.length ? '' : 'disabled'}>
+            开始评分${samples.length ? `（共 ${samples.length} 张）` : '（无图片数据）'}
+          </button>
+        </div>
+      `;
+
+      const startBtn = document.getElementById('startBtn');
+      if (startBtn) {
+        startBtn.addEventListener('click', () => {
+          pageIndex = 1;
+          render();
+        });
+      }
+    }
+
+    function renderImagePage(sample, number) {
+      const selected = answers[sample.sample_key];
+
+      pageRoot.innerHTML = `
+        <div class="image-meta">
+          <span class="pill">第 ${number} / ${samples.length} 张</span>
+          <span class="pill">类目：<strong>${escapeHtml(sample.top_tag)}</strong></span>
+          <span class="pill">场景：<strong>${escapeHtml(sample.custom_category)}</strong></span>
+        </div>
+
+        <p class="lead">
+          该图片属于 <strong>${escapeHtml(sample.top_tag)}</strong> 类目下的
+          <strong>${escapeHtml(sample.custom_category)}</strong> 场景。
+          请在该给定类目/场景下，综合判断图片是否清晰、美观、准确、有吸引力，并是否适合该场景使用。
+        </p>
+
+        <div class="image-area">
+          <img src="${escapeAttr(sample.image_url)}" alt="待评分图片 ${number}"
+            onerror="this.replaceWith(Object.assign(document.createElement('div'), {className:'image-error', innerHTML:'图片加载失败，请检查 image_url 是否允许网页访问或是否仍然有效。'}))" />
+        </div>
+
+        <div class="rating-title">请选择该图片的美学质量评分</div>
+        <div class="rating-row">
+          ${[1,2,3,4,5].map(score => `
+            <div class="rating-option">
+              <input type="radio" name="rating" id="score-${score}" value="${score}" ${Number(selected) === score ? 'checked' : ''} />
+              <label for="score-${score}">
+                <strong>${score}</strong>
+                <span>${scoreText[score]}</span>
+              </label>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="actions">
+          <button id="prevBtn">上一页</button>
+          <button class="primary" id="nextBtn">${number === samples.length ? '完成评分' : '下一页'}</button>
+        </div>
+      `;
+
+      document.querySelectorAll('input[name="rating"]').forEach(input => {
+        input.addEventListener('change', event => {
+          answers[sample.sample_key] = Number(event.target.value);
+          saveAnswers();
+          updateHeader();
+          updateStatsPanel();
+        });
+      });
+
+      document.getElementById('prevBtn').addEventListener('click', () => {
+        pageIndex = Math.max(0, pageIndex - 1);
+        render();
+      });
+
+      document.getElementById('nextBtn').addEventListener('click', () => {
+        if (!answers[sample.sample_key]) {
+          alert('请先选择 1-5 分中的一个评分。');
+          return;
+        }
+        pageIndex += 1;
+        render();
+      });
+    }
+
+    function renderCompletion() {
+      const rows = buildRows();
+      pageRoot.innerHTML = `
+        <div class="completion">
+          <h1>评分完成</h1>
+          <p class="lead">
+            请点击“提交到阿里云 OSS”。提交后，问卷发起人可以在 OSS 的 <code>responses/</code> 目录下载该用户的 CSV 答卷。
+          </p>
+
+          <div class="stat-grid" style="max-width:420px;margin:20px auto;">
+            <div class="stat-card">
+              <b>${getAnsweredCount()}</b>
+              <span>已评分图片数</span>
+            </div>
+            <div class="stat-card">
+              <b>${formatNumber(getLocalAverage())}</b>
+              <span>当前答卷平均分</span>
+            </div>
+          </div>
+
+          <textarea readonly>${escapeHtml(toCsv(rows))}</textarea>
+
+          <div class="export-area">
+            <button id="backBtn">返回修改</button>
+            <button class="success" id="submitBtn">提交到阿里云 OSS</button>
+            <button class="primary" id="downloadBtn">下载 CSV 备份</button>
+            <button id="clearBtn">清空本机答卷</button>
+          </div>
+
+          <p class="status" id="submitStatus">
+            提交成功后，OSS 会新增一个 CSV 文件，包含该用户的 ${samples.length} 行评分记录。
+          </p>
+        </div>
+      `;
+
+      document.getElementById('backBtn').addEventListener('click', () => {
+        pageIndex = samples.length;
+        render();
+      });
+      document.getElementById('downloadBtn').addEventListener('click', downloadCsv);
+      document.getElementById('submitBtn').addEventListener('click', submitToAliyun);
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        if (confirm('确认清空当前浏览器里的评分记录吗？')) {
+          answers = {};
+          saveAnswers();
+          pageIndex = 0;
+          render();
+        }
+      });
+    }
+
+    async function submitToAliyun() {
+      const status = document.getElementById('submitStatus');
+      const btn = document.getElementById('submitBtn');
+
+      if (!isApiUrlConfigured()) {
+        alert('尚未配置 SUBMIT_API_URL，无法提交到阿里云。');
+        return;
+      }
+
+      if (getAnsweredCount() !== samples.length) {
+        alert('还有图片未评分，请返回完成所有评分。');
+        return;
+      }
+
+      if (submitting) return;
+      submitting = true;
+      btn.disabled = true;
+      status.textContent = '正在提交，请不要关闭页面……';
+
+      const payload = {
+        token: SURVEY_TOKEN,
+        user_id: userId,
+        submitted_at: new Date().toISOString(),
+        survey_id: surveyId(),
+        rows: buildRows()
+      };
+
+      try {
+        const res = await fetch(SUBMIT_API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+
+        let data = {};
+        try { data = await res.json(); } catch (e) {}
+
+        if (!res.ok || data.ok === false) {
+          throw new Error(data.error || `HTTP ${res.status}`);
+        }
+
+        localStorage.setItem(`${storageKey}_submitted`, 'true');
+        status.textContent = `提交成功。OSS 文件路径：${data.object_key || 'responses/...'}`;
+        alert('提交成功，结果已保存到阿里云 OSS。');
+      } catch (error) {
+        status.textContent = `提交失败：${error.message || error}。请点击“下载 CSV 备份”。`;
+        alert('提交失败。请下载 CSV 备份，或联系问卷发起人。');
+      } finally {
+        submitting = false;
+        btn.disabled = false;
+      }
+    }
+
+    function buildRows() {
+      const now = new Date().toISOString();
+      return samples.map((sample, index) => ({
+        user_id: userId,
+        submitted_at: now,
+        image_order: index + 1,
+        sample_key: sample.sample_key,
+        keyword: sample.keyword,
+        id: sample.id,
+        top_tag: sample.top_tag,
+        custom_category: sample.custom_category,
+        poiid: sample.poiid,
+        image_url: sample.image_url,
+        plan_type: sample.plan_type,
+        bucket: sample.bucket,
+        score: answers[sample.sample_key] || ''
+      }));
+    }
+
+    function toCsv(rows) {
+      const headers = [
+        'user_id', 'submitted_at', 'image_order', 'sample_key', 'keyword',
+        'id', 'top_tag', 'custom_category', 'poiid', 'image_url',
+        'plan_type', 'bucket', 'score'
+      ];
+
+      const lines = [headers.join(',')];
+      rows.forEach(row => lines.push(headers.map(h => csvEscape(row[h])).join(',')));
+      return '\ufeff' + lines.join('\n');
+    }
+
+    function csvEscape(value) {
+      const text = value === null || value === undefined ? '' : String(value);
+      return `"${text.replaceAll('"', '""')}"`;
+    }
+
+    function downloadCsv() {
+      const csv = toCsv(buildRows());
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `image_aesthetic_survey_${userId}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function updateHeader() {
+      const total = samples.length;
+      const answered = getAnsweredCount();
+      answeredLabel.textContent = `已评分 ${answered} / ${total}`;
+
+      if (pageIndex === 0) progressLabel.textContent = '说明页';
+      else if (pageIndex > total) progressLabel.textContent = '完成页';
+      else progressLabel.textContent = `第 ${pageIndex} / ${total} 张`;
+
+      const pct = total ? Math.round((answered / total) * 100) : 0;
+      progressBar.style.width = `${pct}%`;
+    }
+
+    function updateStatsPanel() {
+      const answered = getAnsweredCount();
+      statAnswered.textContent = answered;
+      statAvg.textContent = formatNumber(getLocalAverage());
+
+      statsBody.innerHTML = samples.map((sample, index) => {
+        const score = answers[sample.sample_key] || '-';
+        return `
+          <tr>
+            <td>#${index + 1}<br><span style="color:var(--muted)">${escapeHtml(sample.top_tag)} / ${escapeHtml(sample.custom_category)}</span></td>
+            <td>${score}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function getAnsweredCount() {
+      return samples.filter(sample => answers[sample.sample_key]).length;
+    }
+
+    function getLocalAverage() {
+      const values = samples.map(sample => answers[sample.sample_key]).filter(Boolean);
+      if (!values.length) return null;
+      return values.reduce((sum, n) => sum + Number(n), 0) / values.length;
+    }
+
+    function loadAnswers() {
+      try {
+        const loaded = JSON.parse(localStorage.getItem(storageKey) || '{}');
+        const validKeys = new Set(samples.map(s => s.sample_key));
+        Object.keys(loaded).forEach(key => {
+          if (!validKeys.has(key)) delete loaded[key];
+        });
+        return loaded;
+      } catch {
+        return {};
+      }
+    }
+
+    function saveAnswers() {
+      localStorage.setItem(storageKey, JSON.stringify(answers));
+    }
+
+    function getUserId() {
+      let id = localStorage.getItem('aesthetic_survey_user_id');
+      if (!id) {
+        id = `user_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+        localStorage.setItem('aesthetic_survey_user_id', id);
+      }
+      return id;
+    }
+
+    function surveyId() {
+      const keys = samples.map(s => s.sample_key).join('|');
+      let hash = 0;
+      for (let i = 0; i < keys.length; i++) {
+        hash = ((hash << 5) - hash) + keys.charCodeAt(i);
+        hash |= 0;
+      }
+      return Math.abs(hash);
+    }
+
+    function isApiUrlConfigured() {
+      return SUBMIT_API_URL.startsWith('http://') || SUBMIT_API_URL.startsWith('https://');
+    }
+
+    function formatNumber(value) {
+      if (value === null || value === undefined || Number.isNaN(Number(value))) return '-';
+      return Number(value).toFixed(2);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+  </script>
+</body>
+</html>
